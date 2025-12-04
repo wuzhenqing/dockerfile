@@ -1,194 +1,333 @@
-# CANN Dockerfile 仓库
-
-## 项目介绍
-
-本仓库用于存储可以在 ModelArts 平台使用的 Docker 镜像的 Dockerfile，所有镜像均已安装 CANN Toolkit 与 Kernels。
-
-这些 Dockerfile 提供了基于华为昇腾 NPU 的开发环境，适用于：
-- ModelArts 平台上的 AI 模型训练和推理
-- 本地开发环境搭建
-- CI/CD 流程中的容器化构建
-
-## 目录结构
-
 ```
-.
-├── base/                                                   # 基础镜像 Dockerfile
-│   └── cann/                                               # CANN 基础镜像
-│       ├── CANN8.3.RC1.Dockerfile
-│       └── entrypoint.sh                                   # 入口脚本
-├── modelarts/                                              # ModelArts 专用镜像
-│   ├── cann/                                               # CANN 相关镜像
-│   │   ├── CANN8.1.RC1.beta1.Dockerfile
-│   │   ├── CANN8.2.RC1.alpha002.Dockerfile
-│   │   ├── CANN8.2.RC1.alpha003.Dockerfile
-│   │   └── CANN8.3.RC1.alpha003.Dockerfile
-│   ├── mindspore/                                          # MindSpore 框架镜像
-│   │   └── MindSpore2.7-CANN8.2.RC1.alpha003.Dockerfile
-│   ├── pyasc/                                              # PyASC 开发镜像
-│   │   └── pyasc-dev.Dockerfile
-│   └── asnumpy/                                            # asnumpy 开发镜像
-│       └── asnumpy-dev.Dockerfile
-├── README.md                                               # 本文件
-├── README.en.md                                            # 英文说明
-├── LICENSE                                                 # 许可证文件
-└── .gitignore                                              # Git 忽略配置
+   ██████╗ █████╗ ███╗   ██╗███╗   ██╗
+  ██╔════╝██╔══██╗████╗  ██║████╗  ██║
+  ██║     ███████║██╔██╗ ██║██╔██╗ ██║
+  ██║     ██╔══██║██║╚██╗██║██║╚██╗██║
+  ╚██████╗██║  ██║██║ ╚████║██║ ╚████║
+   ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═══╝
+  ██████╗  ██████╗  ██████╗██╗  ██╗███████╗██████╗ 
+  ██╔══██╗██╔═══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗
+  ██║  ██║██║   ██║██║     █████╔╝ █████╗  ██████╔╝
+  ██║  ██║██║   ██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗
+  ██████╔╝╚██████╔╝╚██████╗██║  ██╗███████╗██║  ██║
+  ╚═════╝  ╚═════╝  ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
 ```
 
-## Dockerfile 说明
+<p align="center">
+  <strong>🚀 华为昇腾 NPU 开发环境 Dockerfile 集合</strong>
+</p>
 
-### base/cann/
+<p align="center">
+  <a href="https://gitee.com/wuzhenqing/dockerfile/blob/master/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+  </a>
+  <a href="https://gitee.com/wuzhenqing/dockerfile">
+    <img src="https://img.shields.io/badge/gitee-仓库-red.svg" alt="Gitee">
+  </a>
+  <a href="https://gitee.com/wuzhenqing/dockerfile/stargazers">
+    <img src="https://gitee.com/wuzhenqing/dockerfile/badge/star.svg" alt="Gitee Stars">
+  </a>
+  <a href="https://gitee.com/wuzhenqing/dockerfile/members">
+    <img src="https://gitee.com/wuzhenqing/dockerfile/badge/fork.svg" alt="Gitee Forks">
+  </a>
+</p>
 
-#### CANN8.3.RC1.Dockerfile
-- **基础镜像**: `ascendai/cann:8.3.rc1-910b-ubuntu22.04-py3.11`
-- **用途**: 提供完整的 CANN 开发环境，包含 LLVM/Clang 工具链、Python 开发工具和 SSH 服务
-- **主要组件**:
-  - LLVM 19.1.7 (从源码编译)
-  - Python 开发工具包（numpy, scipy, pytest 等）
-  - SSH 服务器配置
-  - 时区和本地化设置
+<p align="center">
+  为 ModelArts 平台和本地开发环境提供开箱即用的 CANN 容器镜像
+</p>
 
-### modelarts/cann/
+---
 
-#### CANN8.1.RC1.beta1.Dockerfile
-- **基础镜像**: `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.1.rc1-910b-ubuntu22.04-py3.11`
-- **用途**: ModelArts 平台使用的 CANN 8.1 版本镜像
-- **特点**: 配置了 ma-user 用户（UID 1000, GID 100）用于 ModelArts 兼容性
+## ✨ 特性亮点
 
-#### CANN8.2.RC1.alpha002.Dockerfile
-- **基础镜像**: `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.2.rc1.alpha002-910b-ubuntu22.04-py3.10`
-- **用途**: ModelArts 平台使用的 CANN 8.2 alpha002 版本镜像
-- **特点**: 包含 Miniconda 和基础 Python 包
+<table>
+  <tr>
+    <td align="center">🎯<br><b>开箱即用</b><br><sub>预装 CANN Toolkit & Kernels</sub></td>
+    <td align="center">🔧<br><b>多版本支持</b><br><sub>CANN 8.1 / 8.2 / 8.3</sub></td>
+    <td align="center">🤖<br><b>框架集成</b><br><sub>PyTorch / MindSpore</sub></td>
+    <td align="center">☁️<br><b>云端兼容</b><br><sub>ModelArts 平台适配</sub></td>
+  </tr>
+</table>
 
-#### CANN8.2.RC1.alpha003.Dockerfile
-- **基础镜像**: `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11`
-- **用途**: ModelArts 平台使用的 CANN 8.2 alpha003 版本镜像
-- **特点**: 包含 PyTorch 和 torch-npu 支持
+---
 
-#### CANN8.3.RC1.alpha003.Dockerfile
-- **基础镜像**: `ascendai/cann:8.3.rc1.alpha003-910b-ubuntu22.04-py3.11`
-- **用途**: ModelArts 平台使用的 CANN 8.3 alpha003 版本镜像
-- **特点**: 包含 PyTorch 和 torch-npu 支持
+## 📑 目录
 
-### modelarts/mindspore/
+- [🚀 快速开始](#-快速开始)
+- [📦 镜像列表](#-镜像列表)
+- [📁 项目结构](#-项目结构)
+- [🔧 详细使用](#-详细使用)
+- [📋 版本兼容性](#-版本兼容性)
+- [❓ 常见问题](#-常见问题)
+- [🤝 参与贡献](#-参与贡献)
+- [📄 许可证](#-许可证)
 
-#### MindSpore2.7-CANN8.2.RC1.alpha003.Dockerfile
-- **基础镜像**: `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11`
-- **用途**: 提供 MindSpore 2.7.0 框架与 CANN 8.2 的集成环境
-- **主要组件**:
-  - MindSpore 2.7.0
-  - Miniconda 环境
-  - CANN Toolkit 集成
+---
 
-### modelarts/pyasc/
+## 🚀 快速开始
 
-#### pyasc-dev.Dockerfile
-- **基础镜像**: `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1.alpha003-910b-ubuntu22.04-py3.11`
-- **用途**: PyASC 开发环境，包含从源码编译的 LLVM
-- **主要组件**:
-  - LLVM 19.1.7 (从源码编译，包含 MLIR, Clang, LLD)
-  - Python 构建工具（cmake, ninja, pybind11 等）
-  - 开发测试工具（pytest, pytest-xdist 等）
-
-### modelarts/asnumpy/
-
-#### asnumpy-dev.Dockerfile
-- **基础镜像**: `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1.alpha002-910b-ubuntu22.04-py3.11`
-- **用途**: asnumpy 开发环境
-- **主要组件**:
-  - 基础开发工具
-  - numpy 和 pytest
-
-## 构建和使用
-
-### 构建镜像
-
-#### 基础镜像构建
+### 一键构建（5分钟上手）
 
 ```bash
-# 构建 base/cann 镜像
-cd base/cann
-docker build -f CANN8.3.RC1.Dockerfile -t cann-base:8.3.rc1 .
+# 克隆仓库
+git clone https://gitee.com/wuzhenqing/dockerfile.git
+cd dockerfile
 
-# 注意：构建前需要准备依赖文件
-# - clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz (放在 /root/ 目录下)
-# - entrypoint.sh (在同一目录下)
-```
-
-#### ModelArts 镜像构建
-
-```bash
-# 构建 CANN 镜像
+# 构建 CANN 8.3 基础镜像
 cd modelarts/cann
-docker build -f CANN8.3.RC1.alpha003.Dockerfile -t cann-modelarts:8.3.alpha003 .
+docker build -f CANN8.3.RC1.alpha003.Dockerfile -t cann:8.3 .
 
-# 构建 MindSpore 镜像
-cd ../mindspore
-docker build -f MindSpore2.7-CANN8.2.RC1.alpha003.Dockerfile -t mindspore-cann:2.7-8.2 .
-
-# 构建 PyASC 开发镜像
-cd ../pyasc
-docker build -f pyasc-dev.Dockerfile -t pyasc-dev:latest .
-# 注意：需要准备 llvm-project-19.1.7.src.tar.xz 文件
-
-# 构建 asnumpy 开发镜像
-cd ../asnumpy
-docker build -f asnumpy-dev.Dockerfile -t asnumpy-dev:latest .
+# 运行容器
+docker run -it --rm cann:8.3 bash
 ```
 
 ### 在 ModelArts 中使用
 
-1. 将构建好的镜像推送到华为云 SWR
-2. 在 ModelArts 镜像管理中注册镜像
-3. 在创建 notebook 的时候可以选择自定义镜像
+```bash
+# 1. 构建并推送镜像到华为云 SWR
+docker tag cann:8.3 swr.cn-south-1.myhuaweicloud.com/<your-org>/cann:8.3
+docker push swr.cn-south-1.myhuaweicloud.com/<your-org>/cann:8.3
 
-## 版本信息
+# 2. 在 ModelArts 镜像管理中注册
+# 3. 创建 Notebook 时选择自定义镜像 ✅
+```
 
-### CANN 版本
-- CANN 8.3 RC1
-- CANN 8.2 RC1 (alpha002, alpha003)
-- CANN 8.1 RC1 (beta1)
+---
 
-### Python 版本
-- Python 3.11 (大部分镜像)
-- Python 3.10 (CANN8.2.RC1.alpha002)
+## 📦 镜像列表
 
-### 其他组件版本
-- MindSpore: 2.7.0
-- LLVM: 19.1.7
-- PyTorch: 最新稳定版
-- torch-npu: 2.7.1rc1
+### 🏗️ 基础镜像
 
-## 依赖文件说明
+| 镜像 | CANN 版本 | Python | 用途 | 特点 |
+|:-----|:----------|:-------|:-----|:-----|
+| `base/cann/CANN8.3.RC1` | 8.3 RC1 | 3.11 | 通用开发环境 | LLVM 19.1.7 + SSH |
 
-部分 Dockerfile 需要额外的依赖文件，构建前请确保准备：
+### ☁️ ModelArts 镜像
 
-1. **base/cann/CANN8.3.RC1.Dockerfile**
-   - `clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz` - LLVM 预编译包
-   - `entrypoint.sh` - 入口脚本
+| 镜像 | CANN 版本 | Python | 框架 | 特点 |
+|:-----|:----------|:-------|:-----|:-----|
+| `modelarts/cann/CANN8.3.RC1.alpha003` | 8.3 α003 | 3.11 | PyTorch + torch-npu | 🔥 推荐 |
+| `modelarts/cann/CANN8.2.RC1.alpha003` | 8.2 α003 | 3.11 | PyTorch + torch-npu | Miniconda |
+| `modelarts/cann/CANN8.2.RC1.alpha002` | 8.2 α002 | 3.10 | - | Miniconda |
+| `modelarts/cann/CANN8.1.RC1.beta1` | 8.1 β1 | 3.11 | - | 基础开发 |
 
-2. **modelarts/pyasc/pyasc-dev.Dockerfile**
-   - `llvm-project-19.1.7.src.tar.xz` - LLVM 源码包
+### 🧠 AI 框架镜像
 
-## 注意事项
+| 镜像 | 框架版本 | CANN 版本 | Python | 用途 |
+|:-----|:---------|:----------|:-------|:-----|
+| `modelarts/mindspore/MindSpore2.7-CANN8.2` | MindSpore 2.7.0 | 8.2 α003 | 3.11 | 深度学习训练 |
 
-1. **架构要求**: 所有镜像均为 ARM64 (aarch64) 架构，适用于昇腾 910B 处理器
-2. **用户权限**: ModelArts 镜像使用 `ma-user` 用户（UID 1000），确保文件权限正确
-3. **网络配置**: 镜像中已配置华为云镜像源，加速包下载
-4. **SSH 配置**: 基础镜像包含 SSH 服务器，可通过环境变量 `HOST_SSH_PUB_KEY` 配置公钥
-5. **存储空间**: 构建镜像需要较大磁盘空间（建议至少 50GB）
+### 🛠️ 开发工具镜像
 
-## 贡献指南
+| 镜像 | 用途 | 主要工具 |
+|:-----|:-----|:---------|
+| `modelarts/pyasc/pyasc-dev` | PyASC 编译器开发 | LLVM 19.1.7 (源码编译) + MLIR |
+| `modelarts/asnumpy/asnumpy-dev` | asnumpy 开发 | numpy + pytest |
 
-欢迎贡献新的 Dockerfile 或改进现有配置。请参考 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详细的贡献流程。
+---
 
-## 许可证
+## 📁 项目结构
 
-本项目采用 [MIT License](LICENSE) 许可证。
+```
+dockerfile/
+├── 📂 base/                      # 基础镜像
+│   └── 📂 cann/
+│       ├── 🐳 CANN8.3.RC1.Dockerfile
+│       └── 📜 entrypoint.sh
+│
+├── 📂 modelarts/                 # ModelArts 专用镜像
+│   ├── 📂 cann/                  # CANN 环境
+│   │   ├── 🐳 CANN8.1.RC1.beta1.Dockerfile
+│   │   ├── 🐳 CANN8.2.RC1.alpha002.Dockerfile
+│   │   ├── 🐳 CANN8.2.RC1.alpha003.Dockerfile
+│   │   └── 🐳 CANN8.3.RC1.alpha003.Dockerfile
+│   ├── 📂 mindspore/             # MindSpore 框架
+│   │   └── 🐳 MindSpore2.7-CANN8.2.RC1.alpha003.Dockerfile
+│   ├── 📂 pyasc/                 # PyASC 开发
+│   │   └── 🐳 pyasc-dev.Dockerfile
+│   └── 📂 asnumpy/               # asnumpy 开发
+│       └── 🐳 asnumpy-dev.Dockerfile
+│
+├── 📄 README.md
+├── 📄 CONTRIBUTING.md
+└── 📄 LICENSE
+```
 
-## 相关链接
+---
 
-- [华为昇腾 AI 处理器](https://www.hiascend.com/)
-- [CANN 文档](https://www.hiascend.com/document)
-- [ModelArts 平台](https://www.huaweicloud.com/product/modelarts.html)
-- [MindSpore 官网](https://www.mindspore.cn/)
+## 🔧 详细使用
+
+### 构建基础镜像
+
+```bash
+cd base/cann
+
+# ⚠️ 构建前需准备依赖文件
+# - clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz (放在 /root/ 目录)
+# - entrypoint.sh (同目录下)
+
+docker build -f CANN8.3.RC1.Dockerfile -t cann-base:8.3.rc1 .
+```
+
+### 构建 ModelArts 镜像
+
+```bash
+# CANN 镜像
+cd modelarts/cann
+docker build -f CANN8.3.RC1.alpha003.Dockerfile -t cann-ma:8.3 .
+
+# MindSpore 镜像
+cd ../mindspore
+docker build -f MindSpore2.7-CANN8.2.RC1.alpha003.Dockerfile -t mindspore:2.7 .
+
+# PyASC 开发镜像 (需要 llvm-project-19.1.7.src.tar.xz)
+cd ../pyasc
+docker build -f pyasc-dev.Dockerfile -t pyasc-dev:latest .
+
+# asnumpy 开发镜像
+cd ../asnumpy
+docker build -f asnumpy-dev.Dockerfile -t asnumpy-dev:latest .
+```
+
+### 依赖文件下载
+
+| 文件 | 用途 | 下载地址 |
+|:-----|:-----|:---------|
+| `clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz` | LLVM 预编译包 | [GitHub Releases](https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.7) |
+| `llvm-project-19.1.7.src.tar.xz` | LLVM 源码包 | [GitHub Releases](https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.7) |
+
+---
+
+## 📋 版本兼容性
+
+### CANN 与框架版本矩阵
+
+| CANN 版本 | PyTorch | torch-npu | MindSpore | Python |
+|:----------|:--------|:----------|:----------|:-------|
+| 8.3 RC1 | ✅ 2.x | ✅ 2.7.1rc1 | - | 3.11 |
+| 8.2 RC1 α003 | ✅ 2.x | ✅ 2.7.1rc1 | ✅ 2.7.0 | 3.11 |
+| 8.2 RC1 α002 | - | - | - | 3.10 |
+| 8.1 RC1 β1 | - | - | - | 3.11 |
+
+### 硬件支持
+
+| 处理器 | 架构 | 支持状态 |
+|:-------|:-----|:---------|
+| 昇腾 910B | ARM64 (aarch64) | ✅ 完全支持 |
+| 昇腾 910A | ARM64 (aarch64) | ⚠️ 部分镜像支持 |
+
+---
+
+## ❓ 常见问题
+
+<details>
+<summary><b>🔹 镜像构建失败，提示找不到基础镜像？</b></summary>
+
+确保您可以访问华为云 SWR 或 Docker Hub：
+
+```bash
+# 测试镜像拉取
+docker pull swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1.alpha003-910b-ubuntu22.04-py3.11
+
+# 或使用 Docker Hub
+docker pull ascendai/cann:8.3.rc1-910b-ubuntu22.04-py3.11
+```
+
+</details>
+
+<details>
+<summary><b>🔹 在 ModelArts 中无法使用自定义镜像？</b></summary>
+
+1. 确保镜像已推送到华为云 SWR
+2. 镜像必须包含 `ma-user` 用户（UID 1000, GID 100）
+3. 在 ModelArts 镜像管理中正确注册镜像
+
+</details>
+
+<details>
+<summary><b>🔹 构建时下载依赖包很慢？</b></summary>
+
+所有镜像已配置华为云镜像源：
+- APT: `mirrors.huaweicloud.com`
+- PIP: `repo.huaweicloud.com`
+
+如仍有问题，请检查网络连接。
+
+</details>
+
+<details>
+<summary><b>🔹 如何选择合适的镜像？</b></summary>
+
+| 使用场景 | 推荐镜像 |
+|:---------|:---------|
+| PyTorch 训练/推理 | `CANN8.3.RC1.alpha003` 或 `CANN8.2.RC1.alpha003` |
+| MindSpore 开发 | `MindSpore2.7-CANN8.2.RC1.alpha003` |
+| 编译器/MLIR 开发 | `pyasc-dev` |
+| 轻量级开发测试 | `asnumpy-dev` |
+
+</details>
+
+---
+
+## 🤝 参与贡献
+
+我们欢迎所有形式的贡献！🎉
+
+```bash
+# 1. Fork 本仓库
+# 2. 创建功能分支
+git checkout -b feat/your-feature
+
+# 3. 提交更改
+git commit -m "feat: 添加新功能"
+
+# 4. 推送并创建 Pull Request
+git push origin feat/your-feature
+```
+
+详细指南请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## 📄 许可证
+
+本项目采用 [MIT License](LICENSE) 许可证开源。
+
+---
+
+## 🔗 相关链接
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://www.hiascend.com/">
+        <img src="https://img.shields.io/badge/昇腾-AI处理器-orange" alt="Ascend">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.hiascend.com/document">
+        <img src="https://img.shields.io/badge/CANN-文档中心-blue" alt="CANN Docs">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.huaweicloud.com/product/modelarts.html">
+        <img src="https://img.shields.io/badge/华为云-ModelArts-red" alt="ModelArts">
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://www.mindspore.cn/">
+        <img src="https://img.shields.io/badge/MindSpore-官网-purple" alt="MindSpore">
+      </a>
+    </td>
+  </tr>
+</table>
+
+---
+
+<p align="center">
+  <sub>⭐ 如果这个项目对您有帮助，请给一个 Star 支持一下！</sub>
+</p>
+
+<p align="center">
+  <sub>Made with ❤️ for the Ascend AI community</sub>
+</p>
