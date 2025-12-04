@@ -2,6 +2,17 @@ FROM ascendai/cann:8.3.rc1-910b-ubuntu22.04-py3.11
 
 USER root
 
+# Configure apt sources
+RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
+    ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
+        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu-ports@g" /etc/apt/sources.list && \
+        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu-ports/@g" /etc/apt/sources.list; \
+    else \
+        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu@g" /etc/apt/sources.list && \
+        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu/@g" /etc/apt/sources.list; \
+    fi
+
 # Update system packages and install build tools and development utilities
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y \
@@ -59,7 +70,9 @@ RUN cd /tmp && \
     rm clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz
 
 # Configure pip and install Python packages
-RUN pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple && \
+RUN pip config set global.index https://repo.huaweicloud.com/repository/pypi && \
+    pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
+    pip config set global.trusted-host repo.huaweicloud.com && \
     pip install --no-cache-dir \
         attrs==24.2.0 \
         build \

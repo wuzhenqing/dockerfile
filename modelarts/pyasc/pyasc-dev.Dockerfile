@@ -17,8 +17,14 @@ RUN default_user=$(getent passwd 1000 | awk -F ':' '{print $1}') || echo "uid: 1
 
 # Configure apt sources and install system packages
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
-    sed -i "s@http://.*ports.ubuntu.com@https://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
-    sed -i "s@http://.*security.ubuntu.com@https://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
+    ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
+        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu-ports@g" /etc/apt/sources.list && \
+        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu-ports/@g" /etc/apt/sources.list; \
+    else \
+        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu@g" /etc/apt/sources.list && \
+        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu/@g" /etc/apt/sources.list; \
+    fi && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install build-essential vim git llvm clang clangd lld ccache -y && \
@@ -28,9 +34,9 @@ RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
     rm /bin/sh && ln -s /bin/bash /bin/sh
 
 # Configure pip and install Python build dependencies
-RUN pip config --global set global.index https://repo.huaweicloud.com/repository/pypi && \
-    pip config --global set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
-    pip config --global set global.trusted-host repo.huaweicloud.com && \
+RUN pip config --user set global.index https://repo.huaweicloud.com/repository/pypi && \
+    pip config --user set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
+    pip config --user set global.trusted-host repo.huaweicloud.com && \
     pip install "cmake>=3.20,<4.0" "ninja>=1.11.1" "pybind11==2.13.1" "setuptools>=71" "setuptools-scm>=8,<9" "wheel" && \
     pip install attrs==24.2.0 numpy==1.26.4 scipy==1.13.1 decorator==5.1.1 psutil==6.0.0 pytest==8.3.2 pytest-xdist==3.6.1 pyyaml typing_extensions
 

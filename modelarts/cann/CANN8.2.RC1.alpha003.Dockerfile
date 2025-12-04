@@ -18,8 +18,14 @@ RUN default_user=$(getent passwd 1000 | awk -F ':' '{print $1}') || echo "uid: 1
 
 # Configure apt sources and install system packages
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
-    sed -i "s@http://.*ports.ubuntu.com@http://repo.huaweicloud.com/ubuntu-ports@g" /etc/apt/sources.list && \
-    sed -i "s@http://.*ports.ubuntu.com@http://repo.huaweicloud.com/ubuntu-ports@g" /etc/apt/sources.list && \
+    ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
+        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu-ports@g" /etc/apt/sources.list && \
+        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu-ports/@g" /etc/apt/sources.list; \
+    else \
+        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu@g" /etc/apt/sources.list && \
+        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu/@g" /etc/apt/sources.list; \
+    fi && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install sudo build-essential vim git cmake -y && \
@@ -43,5 +49,5 @@ RUN echo "source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash" >> /ho
     pip config --user set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
     pip config --user set global.trusted-host repo.huaweicloud.com && \
     pip install attrs cython numpy==1.26.0 decorator sympy cffi pyyaml pathlib2 psutil protobuf==3.20 scipy requests absl-py && \
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu && \
+    pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu && \
     pip install setuptools torch-npu==2.7.1rc1

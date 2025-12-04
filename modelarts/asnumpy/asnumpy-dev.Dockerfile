@@ -17,8 +17,14 @@ RUN default_user=$(getent passwd 1000 | awk -F ':' '{print $1}') || echo "uid: 1
 
 # Configure apt sources and install system packages
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
-    sed -i "s@http://.*ports.ubuntu.com@https://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
-    sed -i "s@http://.*security.ubuntu.com@https://mirrors.huaweicloud.com@g" /etc/apt/sources.list && \
+    ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
+        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu-ports@g" /etc/apt/sources.list && \
+        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu-ports/@g" /etc/apt/sources.list; \
+    else \
+        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu@g" /etc/apt/sources.list && \
+        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu/@g" /etc/apt/sources.list; \
+    fi && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install sudo build-essential vim git cmake -y && \
