@@ -1,4 +1,4 @@
-FROM swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1.alpha002-910b-ubuntu22.04-py3.11
+FROM swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.2.rc1.alpha003-910b-ubuntu22.04-py3.11
 
 USER root
 
@@ -13,7 +13,8 @@ RUN default_user=$(getent passwd 1000 | awk -F ':' '{print $1}') || echo "uid: 1
     fi && \
     groupadd -g 100 ma-group && useradd -d /home/ma-user -m -u 1000 -g 100 -s /bin/bash ma-user && \
     # Grant the read, write, and execute permissions on the target directory to the user ma-user.
-    chmod -R 750 /home/ma-user
+    chmod -R 750 /home/ma-user && \
+    chmod -R 777 /usr/local/Ascend
 
 # Configure apt sources and install system packages
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
@@ -37,8 +38,17 @@ USER ma-user
 
 WORKDIR /home/ma-user
 
-# Configure pip and install Python packages for asnumpy development
-RUN pip config --user set global.index https://repo.huaweicloud.com/repository/pypi && \
+# Install Miniconda and configure environment for MindSpore
+RUN echo "source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash" >> /home/ma-user/.bashrc && \
+    wget --quiet https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-py311_25.5.1-0-Linux-aarch64.sh && \
+    bash Miniconda3-py311_25.5.1-0-Linux-aarch64.sh -b -p /home/ma-user/miniconda3 && \
+    rm -rf Miniconda3-py311_25.5.1-0-Linux-aarch64.sh && \
+    source /home/ma-user/miniconda3/bin/activate && \
+    conda init bash && \
+    pip config --user set global.index https://repo.huaweicloud.com/repository/pypi && \
     pip config --user set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
     pip config --user set global.trusted-host repo.huaweicloud.com && \
-    pip install numpy pytest
+    pip install sympy /usr/local/Ascend/ascend-toolkit/latest/lib64/te-*-py3-none-any.whl /usr/local/Ascend/ascend-toolkit/latest/lib64/hccl-*-py3-none-any.whl && \
+    pip install mindspore==2.7.0 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
+
+

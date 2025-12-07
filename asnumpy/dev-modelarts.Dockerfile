@@ -1,4 +1,4 @@
-FROM swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.2.rc1.alpha002-910b-ubuntu22.04-py3.10
+FROM swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1.alpha002-910b-ubuntu22.04-py3.11
 
 USER root
 
@@ -27,26 +27,66 @@ RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
     fi && \
     apt-get update && \
     apt-get upgrade -y && \
-    apt-get install software-properties-common -y && \
-    add-apt-repository ppa:xmake-io/xmake && \
-    apt-get update && \
-    apt-get install sudo build-essential vim git cmake xmake llvm clang clangd ninja-build -y && \
-    apt-get install btop neofetch zip wget curl openssh-server -y && \
-    apt-get install python3 python3-dev python3-pip -y && \
-    apt-get install libsqlite3-dev zlib1g-dev libssl-dev libffi-dev libbz2-dev liblzma-dev ca-certificates -y && \
+    apt-get install --no-install-recommends -y \
+        # 基础工具
+        ca-certificates \
+        curl \
+        git \
+        sudo \
+        vim \
+        wget \
+        # 文件操作工具
+        bzip2 \
+        rsync \
+        tree \
+        unzip \
+        zip \
+        # 文本处理和搜索工具
+        fd-find \
+        jq \
+        ripgrep \
+        # 编译和构建工具
+        build-essential \
+        clang \
+        clang-format \
+        clangd \
+        cmake \
+        llvm \
+        ninja-build \
+        patch \
+        # 调试工具
+        gdb \
+        lsof \
+        strace \
+        # 系统监控工具
+        btop \
+        ncdu \
+        neofetch \
+        # 终端管理
+        tmux \
+        # 网络工具
+        dnsutils \
+        iputils-ping \
+        net-tools \
+        openssh-server \
+        traceroute \
+        # 文档系统
+        man-db && \
+    # 更新 locate 数据库
+    updatedb && \
+    # 清理 apt 缓存以减少镜像体积
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    # 替换 sh 为 bash
     rm /bin/sh && ln -s /bin/bash /bin/sh
 
 USER ma-user
 
 WORKDIR /home/ma-user
 
-# Install Miniconda and configure Python environment
-RUN wget --quiet https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-py311_25.5.1-0-Linux-aarch64.sh && \
-    bash Miniconda3-py311_25.5.1-0-Linux-aarch64.sh -b -p /home/ma-user/miniconda3 && \
-    rm -rf Miniconda3-py311_25.5.1-0-Linux-aarch64.sh && \
-    pip config --user set global.index https://repo.huaweicloud.com/repository/pypi && \
+# Configure pip and install Python packages for asnumpy development
+RUN pip config --user set global.index https://repo.huaweicloud.com/repository/pypi && \
     pip config --user set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
     pip config --user set global.trusted-host repo.huaweicloud.com && \
-    source /home/ma-user/miniconda3/bin/activate && \
-    conda init bash && \
-    pip install attrs cython numpy==1.24.0 decorator sympy cffi pyyaml pathlib2 psutil protobuf==3.20 scipy requests absl-py
+    pip install numpy pytest
+

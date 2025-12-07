@@ -42,3 +42,4 @@ RUN pip config --user set global.index https://repo.huaweicloud.com/repository/p
     pip install attrs cython numpy==1.26.0 decorator sympy cffi pyyaml pathlib2 psutil protobuf==3.20 scipy requests absl-py && \
     pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu && \
     pip install setuptools torch-npu==2.7.1rc1
+

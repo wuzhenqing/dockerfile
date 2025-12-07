@@ -38,7 +38,7 @@ USER ma-user
 
 WORKDIR /home/ma-user
 
-# Install Miniconda and configure environment for MindSpore
+# Install Miniconda and configure environment with PyTorch and torch-npu
 RUN echo "source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash" >> /home/ma-user/.bashrc && \
     wget --quiet https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-py311_25.5.1-0-Linux-aarch64.sh && \
     bash Miniconda3-py311_25.5.1-0-Linux-aarch64.sh -b -p /home/ma-user/miniconda3 && \
@@ -48,6 +48,7 @@ RUN echo "source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash" >> /ho
     pip config --user set global.index https://repo.huaweicloud.com/repository/pypi && \
     pip config --user set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
     pip config --user set global.trusted-host repo.huaweicloud.com && \
-    pip install sympy /usr/local/Ascend/ascend-toolkit/latest/lib64/te-*-py3-none-any.whl /usr/local/Ascend/ascend-toolkit/latest/lib64/hccl-*-py3-none-any.whl && \
-    pip install mindspore==2.7.0 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
+    pip install attrs cython numpy==1.26.0 decorator sympy cffi pyyaml pathlib2 psutil protobuf==3.20 scipy requests absl-py && \
+    pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu && \
+    pip install setuptools torch-npu==2.7.1rc1
 

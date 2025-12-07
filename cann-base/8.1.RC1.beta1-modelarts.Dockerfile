@@ -39,3 +39,4 @@ RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
     pip config --user set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
     pip config --user set global.trusted-host repo.huaweicloud.com
 
+
