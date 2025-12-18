@@ -5,13 +5,14 @@ USER root
 # Configure apt sources and install system packages
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak && \
     ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
-        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu-ports@g" /etc/apt/sources.list && \
-        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu-ports/@g" /etc/apt/sources.list; \
-    else \
-        sed -i "s@http://[^/]*/ubuntu-ports@https://mirrors.huaweicloud.com/ubuntu@g" /etc/apt/sources.list && \
-        sed -i "s@http://[^/]*/ubuntu/@https://mirrors.huaweicloud.com/ubuntu/@g" /etc/apt/sources.list; \
+    if [ "$ARCH" != "arm64" ] && [ "$ARCH" != "aarch64" ]; then \
+        echo "ERROR: This image only supports aarch64/arm64, got: ${ARCH}" >&2; \
+        exit 1; \
     fi && \
+    sed -i "s@https\\?://[^/]*/ubuntu-ports/\\?@http://repo.huaweicloud.com/ubuntu-ports/@g" /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    sed -i "s@http://repo.huaweicloud.com/ubuntu-ports/@https://repo.huaweicloud.com/ubuntu-ports/@g" /etc/apt/sources.list && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install --no-install-recommends -y \
