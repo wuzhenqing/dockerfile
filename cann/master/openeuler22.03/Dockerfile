@@ -1,46 +1,43 @@
-FROM openeuler/openeuler:22.03
-
-ARG CANN_TOOLKIT_URL
-ARG CANN_OPS_URL
 ARG PYTHON_VERSION=3.12.13
+ARG PYTHON_MAJOR_MINOR=3.12
+
+# Stage 1: Install Python.
+FROM openeuler/openeuler:22.03 AS python-installer
+
+ARG PYTHON_VERSION
+ARG PYTHON_MAJOR_MINOR
 
 USER root
-
 WORKDIR /root
 
-# Put custom Python first in PATH. Do NOT add its lib to LD_LIBRARY_PATH —
-# yum/dnf are Python-based and would break if libpython is overridden.
-# libpython is resolved via rpath baked into the interpreter at build time.
-ENV PATH=/usr/local/python${PYTHON_VERSION}/bin:/opt/openEuler/gcc-toolset-12/root/usr/bin:${PATH} \
-    LD_LIBRARY_PATH=/opt/openEuler/gcc-toolset-12/root/usr/lib64:${LD_LIBRARY_PATH}
+# Keep custom Python libraries out of LD_LIBRARY_PATH so yum/dnf continue to
+# use the system libpython. The interpreter resolves libpython through rpath.
+ENV PATH=/usr/local/python${PYTHON_VERSION}/bin:${PATH}
 
-RUN yum makecache && \
-    yum update -y && \
+RUN yum update -y && \
     yum install -y \
-        bzip2-devel \
+        gcc \
+        gcc-c++ \
+        make \
         cmake \
         curl \
-        expat-devel \
-        gcc-toolset-12-* \
-        gdbm-devel \
-        libev-devel \
-        libffi-devel \
-        libpcap-devel \
-        make \
-        ncurses-devel \
-        ninja-build \
+        zlib-devel \
+        bzip2-devel \
         openssl-devel \
-        readline-devel \
+        ncurses-devel \
         sqlite-devel \
-        systemtap-sdt-devel \
+        readline-devel \
         tk-devel \
-        wget \
+        gdbm-devel \
+        libpcap-devel \
         xz-devel \
-        zlib-devel && \
+        libev-devel \
+        expat-devel \
+        libffi-devel \
+        systemtap-sdt-devel && \
     yum clean all && \
-    rm -rf /var/cache/yum /tmp/*
+    rm -rf /var/cache/yum /var/tmp/* /tmp/*
 
-# Build Python from source with rpath so yum/dnf keep using system libpython.
 RUN curl -fsSL "https://repo.huaweicloud.com/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz" \
         -o "/tmp/Python-${PYTHON_VERSION}.tgz" && \
     tar -xf "/tmp/Python-${PYTHON_VERSION}.tgz" -C /tmp && \
@@ -52,19 +49,91 @@ RUN curl -fsSL "https://repo.huaweicloud.com/python/${PYTHON_VERSION}/Python-${P
         LDFLAGS="-Wl,-rpath,/usr/local/python${PYTHON_VERSION}/lib" && \
     make -j"$(nproc)" && \
     make altinstall && \
-    ln -sf "/usr/local/python${PYTHON_VERSION}/bin/python3.12" "/usr/local/python${PYTHON_VERSION}/bin/python3" && \
-    ln -sf "/usr/local/python${PYTHON_VERSION}/bin/pip3.12" "/usr/local/python${PYTHON_VERSION}/bin/pip3" && \
+    ln -sf "/usr/local/python${PYTHON_VERSION}/bin/python${PYTHON_MAJOR_MINOR}" "/usr/local/python${PYTHON_VERSION}/bin/python3" && \
+    ln -sf "/usr/local/python${PYTHON_VERSION}/bin/pip${PYTHON_MAJOR_MINOR}" "/usr/local/python${PYTHON_VERSION}/bin/pip3" && \
     ln -sf "/usr/local/python${PYTHON_VERSION}/bin/python3" "/usr/local/python${PYTHON_VERSION}/bin/python" && \
     ln -sf "/usr/local/python${PYTHON_VERSION}/bin/pip3" "/usr/local/python${PYTHON_VERSION}/bin/pip" && \
     rm -rf /tmp/*
 
-RUN groupadd HwHiAiUser && \
-    useradd -g HwHiAiUser -d /home/HwHiAiUser -m HwHiAiUser -s /bin/bash && \
-    wget --quiet "${CANN_TOOLKIT_URL}" -O Ascend-cann-toolkit.run && \
-    wget --quiet "${CANN_OPS_URL}" -O Ascend-cann-ops.run && \
-    bash Ascend-cann-toolkit.run --quiet --install --install-for-all && \
-    bash Ascend-cann-ops.run --quiet --install --install-for-all && \
-    rm -f Ascend-cann-toolkit.run Ascend-cann-ops.run && \
-    echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc
+# Stage 2: Install CANN Toolkit and Ops.
+FROM python-installer AS cann-installer
+
+ARG CANN_TOOLKIT_URL
+ARG CANN_OPS_URL
+
+RUN yum update -y && \
+    yum install -y \
+        unzip \
+        pciutils \
+        net-tools \
+        lapack-devel \
+        gcc-gfortran \
+        util-linux \
+        findutils \
+        wget && \
+    yum clean all && \
+    rm -rf /var/cache/yum /var/tmp/* /tmp/*
+
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+        attrs \
+        cython \
+        numpy \
+        decorator \
+        sympy \
+        cffi \
+        pyyaml \
+        pathlib2 \
+        psutil \
+        protobuf==3.20 \
+        scipy \
+        requests \
+        absl-py
+
+RUN wget --quiet "${CANN_TOOLKIT_URL}" -O /root/Ascend-cann-toolkit.run && \
+    wget --quiet "${CANN_OPS_URL}" -O /root/Ascend-cann-ops.run
+
+RUN chmod +x /root/Ascend-cann-toolkit.run && \
+    /root/Ascend-cann-toolkit.run --quiet --install --install-for-all && \
+    rm -f /root/Ascend-cann-toolkit.run
+
+RUN chmod +x /root/Ascend-cann-ops.run && \
+    /root/Ascend-cann-ops.run --quiet --install --install-for-all && \
+    rm -f /root/Ascend-cann-ops.run
+
+# Stage 3: Copy the installed artifacts into the final image.
+FROM openeuler/openeuler:22.03 AS official-openeuler
+
+ARG PYTHON_VERSION
+
+USER root
+WORKDIR /root
+
+ENV PATH=/usr/local/python${PYTHON_VERSION}/bin:${PATH}
+
+RUN yum update -y && \
+    yum install -y \
+        ca-certificates \
+        bash \
+        glibc \
+        sqlite-devel \
+        gcc \
+        gcc-c++ \
+        make \
+        cmake \
+        git \
+        vim \
+        wget \
+        jq \
+        curl \
+        numactl-devel && \
+    yum clean all && \
+    rm -rf /var/cache/yum /var/tmp/* /tmp/*
+
+COPY --from=cann-installer /usr/local/python${PYTHON_VERSION} /usr/local/python${PYTHON_VERSION}
+COPY --from=cann-installer /usr/local/Ascend /usr/local/Ascend
+COPY --from=cann-installer /etc/Ascend /etc/Ascend
+
+RUN echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc
 
 CMD ["/bin/bash"]
