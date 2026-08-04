@@ -15,4 +15,8 @@ RUN default_user=$(getent passwd 1000 | awk -F ':' '{print $1}') || echo "uid: 1
     # Grant the read, write, and execute permissions on the target directory to the user ma-user.
     chmod -R 750 /home/ma-user
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends tmux screen && \
+    rm -rf /var/lib/apt/lists/*
+
 USER ma-user
