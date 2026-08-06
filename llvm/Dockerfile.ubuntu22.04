@@ -1,0 +1,165 @@
+# Match the versioned CPython layout used by the Ascend CANN Ubuntu images.
+FROM ubuntu:22.04 AS python-installer
+
+ENV PATH=/usr/local/python3.11.13/bin:${PATH}
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+        apt-transport-https \
+        bash \
+        build-essential \
+        ca-certificates \
+        curl \
+        libbz2-dev \
+        libev-dev \
+        libffi-dev \
+        libgdbm-dev \
+        liblzma-dev \
+        libncurses5-dev \
+        libnss3-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        zlib1g-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+
+RUN curl -fsSL \
+        https://repo.huaweicloud.com/python/3.11.13/Python-3.11.13.tgz \
+        -o /tmp/Python-3.11.13.tgz && \
+    tar -xf /tmp/Python-3.11.13.tgz -C /tmp && \
+    cd /tmp/Python-3.11.13 && \
+    mkdir -p /usr/local/python3.11.13/lib && \
+    ./configure \
+        --enable-shared \
+        --prefix=/usr/local/python3.11.13 \
+        LDFLAGS="-Wl,-rpath,/usr/local/python3.11.13/lib" && \
+    make -j"$(nproc)" && \
+    PIP_ROOT_USER_ACTION=ignore make altinstall && \
+    ln -sf /usr/local/python3.11.13/bin/python3.11 /usr/local/python3.11.13/bin/python3 && \
+    ln -sf /usr/local/python3.11.13/bin/pip3.11 /usr/local/python3.11.13/bin/pip3 && \
+    ln -sf /usr/local/python3.11.13/bin/python3 /usr/local/python3.11.13/bin/python && \
+    ln -sf /usr/local/python3.11.13/bin/pip3 /usr/local/python3.11.13/bin/pip && \
+    cd / && \
+    rm -rf /tmp/* && \
+    python --version && \
+    pip --version
+
+# Build LLVM with the distribution toolchain. The source and build tree stay in
+# this stage so they do not increase the size of the development image.
+FROM python-installer AS llvm-builder
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+        clang \
+        cmake \
+        libedit-dev \
+        libxml2-dev \
+        libzstd-dev \
+        lld \
+        llvm \
+        ninja-build \
+        pkg-config \
+        swig \
+        wget \
+        xz-utils && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+
+RUN wget -q \
+        https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/llvm-project-19.1.7.src.tar.xz \
+        -O /tmp/llvm-project.src.tar.xz && \
+    mkdir -p /tmp/llvm-project && \
+    tar -xJf /tmp/llvm-project.src.tar.xz \
+        --strip-components=1 \
+        -C /tmp/llvm-project && \
+    python -m pip install \
+        --no-cache-dir \
+        --root-user-action=ignore \
+        --requirement /tmp/llvm-project/mlir/python/requirements.txt && \
+    cmake \
+        -S /tmp/llvm-project/llvm \
+        -B /tmp/llvm-build \
+        -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/opt/llvm \
+        -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_COMPILER=clang++ \
+        -DLLVM_ENABLE_LLD=ON \
+        -DLLVM_ENABLE_PROJECTS="mlir;clang" \
+        -DLLVM_TARGETS_TO_BUILD="AArch64" \
+        -DLLVM_ENABLE_RTTI=ON \
+        -DLLVM_ENABLE_ASSERTIONS=ON \
+        -DLLVM_INSTALL_UTILS=ON \
+        -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
+        -DPython3_EXECUTABLE="$(command -v python)" \
+        -DPython3_FIND_STRATEGY=LOCATION && \
+    ninja -C /tmp/llvm-build -j"$(nproc)" && \
+    ninja -C /tmp/llvm-build install && \
+    rm -rf \
+        /tmp/* \
+        /var/tmp/* \
+        /root/.cache
+
+# Keep the installed toolchain and the packages needed to use this image as a
+# C/C++ and MLIR development base.
+FROM ubuntu:22.04
+
+LABEL org.opencontainers.image.title="LLVM 19.1.7 development image for Ubuntu 22.04" \
+      org.opencontainers.image.description="CPython 3.11.13, LLVM, Clang and MLIR built from source" \
+      org.opencontainers.image.source="https://github.com/llvm/llvm-project" \
+      org.opencontainers.image.version="19.1.7"
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+        bash \
+        build-essential \
+        ca-certificates \
+        cmake \
+        git \
+        libbz2-dev \
+        libedit-dev \
+        libev-dev \
+        libffi-dev \
+        libgdbm-dev \
+        liblzma-dev \
+        libncurses5-dev \
+        libnss3-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        libxml2-dev \
+        libzstd-dev \
+        ninja-build \
+        pkg-config \
+        swig \
+        zlib1g-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*
+
+COPY --from=llvm-builder /opt/llvm /opt/llvm
+COPY --from=llvm-builder /usr/local/python3.11.13 /usr/local/python3.11.13
+
+ENV LLVM_HOME=/opt/llvm \
+    LANG=C.UTF-8 \
+    CC=clang \
+    CXX=clang++ \
+    PATH=/opt/llvm/bin:/usr/local/python3.11.13/bin:${PATH} \
+    LD_LIBRARY_PATH=/opt/llvm/lib \
+    CMAKE_PREFIX_PATH=/opt/llvm \
+    LLVM_DIR=/opt/llvm/lib/cmake/llvm \
+    MLIR_DIR=/opt/llvm/lib/cmake/mlir \
+    Clang_DIR=/opt/llvm/lib/cmake/clang \
+    PYTHONPATH=/opt/llvm/python_packages/mlir_core
+
+RUN test "$(llvm-config --version)" = "19.1.7" && \
+    test "$(command -v python)" = "/usr/local/python3.11.13/bin/python" && \
+    test "$(python --version)" = "Python 3.11.13" && \
+    python -m pip --version && \
+    clang --version && \
+    mlir-opt --version && \
+    python -c "import bz2, ctypes, lzma, readline, sqlite3, ssl; from mlir import ir; print(ir.Context())"
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]

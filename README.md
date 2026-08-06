@@ -14,6 +14,7 @@
 /root/dockerfile/
 ├── asnumpy/              # asnumpy 项目（NumPy API for Ascend）
 ├── cann-base/            # CANN 基础镜像（多版本）
+├── llvm/                 # LLVM 源码编译开发基础镜像
 ├── mindspore/            # MindSpore 深度学习框架
 ├── pyasc/                # PyASC 项目（Python for Ascend）
 ├── docs/                 # 详细文档
@@ -26,6 +27,7 @@
 |------|------|------|
 | **asnumpy** | NumPy-like API for Ascend NPU | [详情](docs/projects.md#asnumpy) |
 | **cann-base** | CANN 基础运行时环境（多版本） | [详情](docs/projects.md#cann-base) |
+| **llvm** | LLVM、Clang 和 MLIR 源码编译开发环境 | [详情](llvm/README.md) |
 | **mindspore** | 华为全场景深度学习框架 | [详情](docs/projects.md#mindspore) |
 | **pyasc** | 昇腾 Python 编程框架 | [详情](docs/projects.md#pyasc) |
 
@@ -42,6 +44,9 @@ docker build -f asnumpy/dev-modelarts.Dockerfile -t asnumpy:dev-modelarts .
 
 # CANN 8.3 基础镜像
 docker build -f cann-base/8.3.RC1-base.Dockerfile -t cann:8.3-base .
+
+# LLVM 19.1.7 Ubuntu 22.04 开发基础镜像
+docker build -f llvm/Dockerfile.ubuntu22.04 -t llvm:19.1.7-ubuntu22.04 llvm
 
 # MindSpore 2.7 环境
 docker build -f mindspore/2.7-cann8.2-modelarts.Dockerfile -t mindspore:2.7 .
@@ -124,7 +129,7 @@ docker run -it --rm \
 **注意事项**：
 
 - 构建镜像需要良好的网络环境，建议使用国内镜像源
-- 部分镜像需要额外的文件（如 LLVM 源码包），请确保文件在正确位置
+- 部分镜像构建依赖网络下载上游源码或安装包，请确保构建机能访问所需源
 - 运行容器需要昇腾驱动支持，请确保主机已正确安装驱动
 
 **相关资源**：
