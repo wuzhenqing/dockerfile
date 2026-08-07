@@ -1,170 +1,72 @@
-# Match the versioned CPython layout used by the Ascend CANN openEuler images.
-FROM openeuler/openeuler:22.03 AS python-installer
+FROM openeuler/openeuler:22.03
 
-# hadolint ignore=DL3041
+USER root
+
+WORKDIR /root
+
 RUN dnf install -y \
         bzip2-devel \
         ca-certificates \
+        clang \
+        clang-tools-extra \
         cmake \
         curl \
-        expat-devel \
         gcc \
         gcc-c++ \
-        gdbm-devel \
-        libev-devel \
-        libffi-devel \
-        libpcap-devel \
-        make \
-        ncurses-devel \
-        openssl-devel \
-        readline-devel \
-        sqlite-devel \
-        systemtap-sdt-devel \
-        tk-devel \
-        xz-devel \
-        zlib-devel && \
-    dnf clean all && \
-    rm -rf /var/cache/dnf /var/cache/yum /var/tmp/* /tmp/*
-
-ENV PATH=/usr/local/python3.11.13/bin:${PATH}
-
-RUN curl -fsSL \
-        https://repo.huaweicloud.com/python/3.11.13/Python-3.11.13.tgz \
-        -o /tmp/Python-3.11.13.tgz && \
-    tar -xf /tmp/Python-3.11.13.tgz -C /tmp && \
-    cd /tmp/Python-3.11.13 && \
-    mkdir -p /usr/local/python3.11.13/lib && \
-    ./configure \
-        --enable-shared \
-        --prefix=/usr/local/python3.11.13 \
-        LDFLAGS="-Wl,-rpath,/usr/local/python3.11.13/lib" && \
-    make -j"$(nproc)" && \
-    PIP_ROOT_USER_ACTION=ignore make altinstall && \
-    ln -sf /usr/local/python3.11.13/bin/python3.11 /usr/local/python3.11.13/bin/python3 && \
-    ln -sf /usr/local/python3.11.13/bin/pip3.11 /usr/local/python3.11.13/bin/pip3 && \
-    ln -sf /usr/local/python3.11.13/bin/python3 /usr/local/python3.11.13/bin/python && \
-    ln -sf /usr/local/python3.11.13/bin/pip3 /usr/local/python3.11.13/bin/pip && \
-    cd / && \
-    rm -rf /tmp/* && \
-    python --version && \
-    pip --version
-
-# Build LLVM with the distribution toolchain. The source and build tree stay in
-# this stage so they do not increase the size of the development image.
-FROM python-installer AS llvm-builder
-
-# hadolint ignore=DL3041
-RUN dnf install -y \
-        clang \
-        libedit-devel \
-        libxml2-devel \
-        libzstd-devel \
+        git \
         lld \
         llvm \
+        libffi-devel \
+        liblzma-devel \
+        libncurses-devel \
+        libzstd-devel \
+        make \
         ninja-build \
+        openssl-devel \
         pkgconf-pkg-config \
-        swig \
+        readline-devel \
+        sqlite-devel \
         wget \
-        xz && \
+        xz \
+        zlib-devel && \
     dnf clean all && \
-    rm -rf /var/cache/dnf /var/cache/yum /var/tmp/* /tmp/*
+    rm -rf /var/cache/dnf
 
-RUN wget -q \
-        https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/llvm-project-19.1.7.src.tar.xz \
-        -O /tmp/llvm-project.src.tar.xz && \
-    mkdir -p /tmp/llvm-project && \
-    tar -xJf /tmp/llvm-project.src.tar.xz \
-        --strip-components=1 \
-        -C /tmp/llvm-project && \
-    python -m pip install \
-        --no-cache-dir \
-        --root-user-action=ignore \
-        --requirement /tmp/llvm-project/mlir/python/requirements.txt && \
-    cmake \
-        -S /tmp/llvm-project/llvm \
-        -B /tmp/llvm-build \
-        -G Ninja \
+RUN wget https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
+    tar -xvf Python-3.11.15.tar.xz && cd Python-3.11.15 && \
+    mkdir -p /usr/local/python3.11.15/lib && \
+    ./configure --enable-shared LDFLAGS="-Wl,-rpath /usr/local/python3.11.15/lib" --prefix=/usr/local/python3.11.15 && \
+    make -j"$(nproc)" && \
+    make altinstall && \
+    ln -sf /usr/local/python3.11.15/bin/python3.11 /usr/local/python3.11.15/bin/python3 && \
+    ln -sf /usr/local/python3.11.15/bin/pip3.11 /usr/local/python3.11.15/bin/pip3 && \
+    ln -sf /usr/local/python3.11.15/bin/python3 /usr/local/python3.11.15/bin/python && \
+    ln -sf /usr/local/python3.11.15/bin/pip3 /usr/local/python3.11.15/bin/pip && \
+    cd /root && rm Python-3.11.15.tar.xz && rm -rf Python-3.11.15
+
+ENV PATH=/usr/local/python3.11.15/bin:$PATH
+ENV LLVM_INSTALL_PREFIX=/opt/LLVM-19.1.7
+
+RUN wget -q https://llvm-project.obs.cn-southwest-2.myhuaweicloud.com/llvm-project-19.1.7.src.tar.xz && \
+    tar -xvf llvm-project-19.1.7.src.tar.xz && \
+    cd llvm-project-19.1.7.src && \
+    python -m pip install --no-cache-dir -r mlir/python/requirements.txt && \
+    cmake -S llvm -B build -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/opt/llvm \
+        -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_PREFIX} \
         -DCMAKE_C_COMPILER=clang \
         -DCMAKE_CXX_COMPILER=clang++ \
         -DLLVM_ENABLE_LLD=ON \
         -DLLVM_ENABLE_PROJECTS="mlir;clang" \
-        -DLLVM_TARGETS_TO_BUILD="AArch64" \
+        -DLLVM_TARGETS_TO_BUILD=Native \
         -DLLVM_ENABLE_RTTI=ON \
         -DLLVM_ENABLE_ASSERTIONS=ON \
         -DLLVM_INSTALL_UTILS=ON \
         -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
-        -DPython3_EXECUTABLE="$(command -v python)" \
+        -DPython3_EXECUTABLE=$(which python3) \
         -DPython3_FIND_STRATEGY=LOCATION && \
-    ninja -C /tmp/llvm-build -j"$(nproc)" && \
-    ninja -C /tmp/llvm-build install && \
-    rm -rf \
-        /tmp/* \
-        /var/tmp/* \
-        /root/.cache
-
-# Keep the installed toolchain and the packages needed to use this image as a
-# C/C++ and MLIR development base.
-FROM openeuler/openeuler:22.03
-
-LABEL org.opencontainers.image.title="LLVM 19.1.7 development image for openEuler 22.03" \
-      org.opencontainers.image.description="CPython 3.11.13, LLVM, Clang and MLIR built from source" \
-      org.opencontainers.image.source="https://github.com/llvm/llvm-project" \
-      org.opencontainers.image.version="19.1.7"
-
-# hadolint ignore=DL3041
-RUN dnf install -y \
-        bash \
-        bzip2-devel \
-        ca-certificates \
-        cmake \
-        expat-devel \
-        gcc \
-        gcc-c++ \
-        git \
-        gdbm-devel \
-        libedit-devel \
-        libffi-devel \
-        libxml2-devel \
-        libzstd-devel \
-        make \
-        ncurses-devel \
-        ninja-build \
-        openssl-devel \
-        pkgconf-pkg-config \
-        readline-devel \
-        sqlite-devel \
-        swig \
-        tk-devel \
-        xz-devel \
-        zlib-devel && \
-    dnf clean all && \
-    rm -rf /var/cache/dnf /var/cache/yum /var/tmp/* /tmp/*
-
-COPY --from=llvm-builder /opt/llvm /opt/llvm
-COPY --from=llvm-builder /usr/local/python3.11.13 /usr/local/python3.11.13
-
-ENV LLVM_HOME=/opt/llvm \
-    LANG=C.UTF-8 \
-    CC=clang \
-    CXX=clang++ \
-    PATH=/opt/llvm/bin:/usr/local/python3.11.13/bin:${PATH} \
-    LD_LIBRARY_PATH=/opt/llvm/lib64:/opt/llvm/lib \
-    CMAKE_PREFIX_PATH=/opt/llvm \
-    LLVM_DIR=/opt/llvm/lib/cmake/llvm \
-    MLIR_DIR=/opt/llvm/lib/cmake/mlir \
-    Clang_DIR=/opt/llvm/lib/cmake/clang \
-    PYTHONPATH=/opt/llvm/python_packages/mlir_core
-
-RUN test "$(llvm-config --version)" = "19.1.7" && \
-    test "$(command -v python)" = "/usr/local/python3.11.13/bin/python" && \
-    test "$(python --version)" = "Python 3.11.13" && \
-    python -m pip --version && \
-    clang --version && \
-    mlir-opt --version && \
-    python -c "import bz2, ctypes, lzma, readline, sqlite3, ssl; from mlir import ir; print(ir.Context())"
-
-WORKDIR /workspace
+    ninja -C build -j$(nproc) && \
+    ninja -C build install && \
+    cd /root && rm llvm-project-19.1.7.src.tar.xz && rm -rf llvm-project-19.1.7.src
 
 CMD ["/bin/bash"]
