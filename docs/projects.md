@@ -1,326 +1,99 @@
-# 项目说明
+# Project notes
 
-本文档详细介绍各个项目的特性、用途和配置。
+Background and configuration notes for each image family in this repository. For build commands and layout overview, start with the [root README](../README.md). Naming rules live in [naming-conventions.md](naming-conventions.md).
 
 ## asnumpy
 
-### 简介
+Development image for NumPy-style Ascend NPU workflows. The Dockerfile starts from `ascendai/cann:9.0.0-beta.2-910b-ubuntu22.04-py3.11`, creates a ModelArts-compatible `ma-user` account, and installs a full host toolchain (Clang/LLVM, CMake, Ninja, GDB, ripgrep, tmux, and related utilities).
 
-**NumPy-like API for Ascend NPU**
-
-asnumpy 提供类似 NumPy 的 API，使得昇腾 NPU 编程更加简单直观。开发者可以使用熟悉的 NumPy 语法在昇腾硬件上执行计算。
-
-### 镜像信息
-
-- **基础镜像**：`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:8.3.rc1.alpha002-910b-ubuntu22.04-py3.11`
-- **Python 版本**：3.11
-- **Ubuntu 版本**：22.04
-
-### 主要依赖
-
-- numpy
-- pytest（测试框架）
-
-### 预装工具
-
-完整的开发工具链，包括：
-- C/C++ 编译工具（clang, cmake, ninja）
-- 代码搜索工具（ripgrep, fd-find）
-- 系统监控工具（btop, ncdu, neofetch）
-- 调试工具（gdb, strace, lsof）
-- 终端管理（tmux）
-
-### 构建示例
+Inside the image, Miniforge/Mamba provides two conda environments (`py311` and `py312`). Each environment ships NumPy, pytest, PyTorch 2.9.0, and matching `torch-npu` / torchvision / torchaudio wheels so algorithm work can move between NumPy-style code and PyTorch without rebuilding the container.
 
 ```bash
-# 基础版本（本地开发）
-docker build -f asnumpy/dev-base.Dockerfile -t asnumpy:dev-base .
-
-# ModelArts 版本（云平台）
-docker build -f asnumpy/dev-modelarts.Dockerfile -t asnumpy:dev-modelarts .
+docker build -f asnumpy/Dockerfile -t asnumpy:dev .
 ```
 
-### 适用场景
+Prefer this image when you want a relatively light Ascend development shell for prototyping and tests, rather than a from-source LLVM or framework training stack.
 
-- NumPy 代码迁移到昇腾 NPU
-- 科学计算和数据分析
-- 算法原型开发
+## cann
 
----
+CANN (Compute Architecture for Neural Networks) is Huawei Ascend’s runtime and toolkit layer. The `cann/` directory holds versioned Dockerfiles that layer developer tooling on top of published CANN base images, covering both local `root` images and ModelArts `ma-user` variants. Rolling builds from the CANN `master` channel are documented separately in [cann/master/README.md](../cann/master/README.md).
 
-## cann-base
+Representative files:
 
-### 简介
+| Dockerfile | Role |
+|------------|------|
+| `8.3.RC1-base.Dockerfile` | Local development base with a prebuilt LLVM 19.1.7 toolchain under `/opt/llvm`, monitoring/debug utilities, SSH, and `entrypoint.sh` |
+| `8.3.RC1.alpha003-modelarts.Dockerfile` | ModelArts image with PyTorch 2.x and `torch-npu` |
+| `8.2.RC1.alpha003-modelarts.Dockerfile` | ModelArts image with a scientific Python stack on CANN 8.2 |
+| `8.2.RC1.alpha002-modelarts.Dockerfile` | Older ModelArts line with Miniconda (Python 3.10) |
+| `8.1.RC1.beta1-modelarts.Dockerfile` | Legacy ModelArts line retained for compatibility |
 
-**CANN (Compute Architecture for Neural Networks) 基础镜像**
+Newer lines (`8.5.x`, `9.0.0`, `9.0.0-beta.2`, `9.1.0-master`, and device- or distro-specific variants such as 910b / 910c / A3 and Ubuntu / openEuler) follow the same pattern: pin a CANN base tag in the filename, then add packages and user setup needed for that target. Browse `cann/` for the full set.
 
-CANN 是华为昇腾异构计算架构的基础运行时环境。本项目维护多个 CANN 版本的镜像，支持不同的开发和部署需求。
-
-### 支持的版本
-
-| 版本 | Python | 特性 | Dockerfile |
-|------|--------|------|------------|
-| **8.3 RC1** | 3.11 | 最新稳定版，带 LLVM 19.1.7 工具链 | `8.3.RC1-base.Dockerfile` |
-| 8.3 RC1 alpha003 | 3.11 | 包含 PyTorch 2.x 和 torch-npu 支持 | `8.3.RC1.alpha003-modelarts.Dockerfile` |
-| 8.2 RC1 alpha003 | 3.11 | 稳定版，包含完整科学计算栈 | `8.2.RC1.alpha003-modelarts.Dockerfile` |
-| 8.2 RC1 alpha002 | 3.10 | 包含 Miniconda 环境 | `8.2.RC1.alpha002-modelarts.Dockerfile` |
-| 8.1 RC1 beta1 | 3.11 | 旧版本，包含 XMake 构建系统 | `8.1.RC1.beta1-modelarts.Dockerfile` |
-
-### 8.3 RC1（推荐）
-
-**最完整的开发环境**
-
-#### 特性
-
-- LLVM/Clang 19.1.7 工具链（预编译版本）
-- 完整的系统监控和调试工具
-- SSH 服务配置
-- 自定义 entrypoint 脚本
-
-#### 主要 Python 包
-
-```
-attrs==24.2.0, build, decorator==5.1.1, filecheck, lit
-numpy==1.26.4, psutil==6.0.0, pybind11==2.13.1
-pytest==8.3.2, pytest-xdist==3.6.1, pyyaml
-scipy==1.13.1, setuptools>=71, typing_extensions, wheel
-```
-
-#### 环境变量
+The 8.3 RC1 base image is still a useful reference for a “batteries included” local toolchain. It expects a prebuilt archive at build time (`clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz` in the build context), installs it to `/opt/llvm`, and exports `LLVM_INSTALL_PREFIX`, `CC`, and `CXX` accordingly. Python packages commonly pinned in that line include NumPy, SciPy, pybind11, pytest, and related build helpers. `entrypoint.sh` sources Ascend environment scripts and can configure in-container SSH when keys are supplied.
 
 ```bash
-LLVM_INSTALL_PREFIX=/opt/llvm
-PATH=$LLVM_INSTALL_PREFIX/bin:$PATH
-LD_LIBRARY_PATH=$LLVM_INSTALL_PREFIX/lib:$LD_LIBRARY_PATH
-CC=$LLVM_INSTALL_PREFIX/bin/clang
-CXX=$LLVM_INSTALL_PREFIX/bin/clang++
-PYASC_DUMP_PATH=/root/.cache/pyasc
-PYASC_SETUP_CLANG_LLD=1
+docker build -f cann/8.3.RC1-base.Dockerfile -t cann:8.3-base .
 ```
 
-#### 构建要求
+Older tags are kept mainly for reproducing historical environments and dependency pins.
 
-需要准备 LLVM 预编译包：
-```bash
-# 放置在项目根目录
-/root/clang+llvm-19.1.7-aarch64-linux-gnu.tar.xz
-```
+## llvm
 
-### 8.3 RC1 alpha003
+From-source LLVM 19.1.7 images (Clang, MLIR, and MLIR Python bindings) on Ubuntu 22.04 and openEuler 22.03, including a matching CPython 3.11.15 build. These images do not install CANN; they are intentional bases for compiler and binding work.
 
-**PyTorch 开发环境**
-
-包含 PyTorch 2.x 和 torch-npu==2.7.1rc1，适合 PyTorch 模型开发和训练。
-
-### 其他版本
-
-旧版本主要用于兼容性测试和特定项目维护。
-
-### entrypoint.sh
-
-8.3 RC1 base 版本包含启动脚本，自动处理：
-- 加载 Ascend 环境变量
-- SSH 密钥配置
-- 容器内 SSH 服务启动
-
----
+Full build options, install paths, and usage notes are in [llvm/README.md](../llvm/README.md).
 
 ## mindspore
 
-### 简介
+MindSpore training and development image for Ascend. `mindspore/2.7-cann8.2-modelarts.Dockerfile` builds on the AscendHub CANN 8.2 RC1 alpha003 Ubuntu 22.04 Python 3.11 base, configures `ma-user` for ModelArts, widens permissions under `/usr/local/Ascend`, and installs MindSpore 2.7.0 together with a scientific Python stack (NumPy, SciPy, SymPy, and related native build dependencies such as Eigen and Boost).
 
-**MindSpore - 华为全场景深度学习框架**
-
-MindSpore 是华为开源的深度学习框架，支持端边云全场景部署。提供自动微分、图算融合等特性，在昇腾硬件上有优异的性能。
-
-### 镜像信息
-
-- **基础镜像**：CANN 8.2 RC1 alpha003
-- **MindSpore 版本**：2.7.0
-- **Python 环境**：Miniconda3 (Python 3.11)
-
-### 主要特性
-
-- ✅ 预装 Miniconda 环境
-- ✅ 自动加载 Ascend 环境变量
-- ✅ 完整的科学计算栈（NumPy, SciPy）
-- ✅ Ascend 工具包集成（te, hccl）
-
-### 主要依赖
-
-```
-sympy, numpy==1.26.0, scipy
-attrs, cython, decorator, cffi, pyyaml
-pathlib2, psutil, protobuf==3.20
-requests, absl-py
-mindspore==2.7.0
-```
-
-### 构建示例
+Ascend environment scripts are expected to be sourced at runtime (`setenv.bash` from the ascend-toolkit). Use this image for MindSpore model work on Ascend rather than for general LLVM or NumPy-only prototyping.
 
 ```bash
 docker build -f mindspore/2.7-cann8.2-modelarts.Dockerfile -t mindspore:2.7 .
 ```
 
-### 特殊配置
-
-- Ascend 目录权限：`chmod -R 777 /usr/local/Ascend`
-- 自动加载环境：`source /usr/local/Ascend/ascend-toolkit/latest/bin/setenv.bash`
-- 包含开发库：libeigen3-dev, libboost-all-dev
-
-### 适用场景
-
-- MindSpore 模型开发和训练
-- 深度学习算法研究
-- 端边云协同推理
-
----
-
 ## pyasc
 
-### 简介
+PyASC (Python for Ascend) images live under `pyasc/`. There are two complementary styles.
 
-**Python for Ascend - 昇腾 Python 编程框架**
+**Distribution developer images** (`Dockerfile.ubuntu22.04` and `Dockerfile.openeuler22.03`) start from stock Ubuntu 22.04 or openEuler 22.03, build CPython 3.11.15 and LLVM/MLIR 19.1.7 from source, then install CANN toolkit and ops packages supplied through the required build arguments `CANN_TOOLKIT_URL` and `CANN_OPS_URL`. Interactive shells source `/usr/local/Ascend/cann/set_env.sh` via `~/.bashrc`. LLVM is installed at `/opt/LLVM-19.1.7` (`LLVM_INSTALL_PREFIX`). These images are meant for self-contained local environments where you choose the CANN snapshot yourself.
 
-pyasc 为昇腾 NPU 提供 Python 编程接口，支持从源码构建 LLVM，提供深度定制的开发环境。
+**ModelArts stack image** (`9.0.0-910b-ubuntu22.04-py3.11.Dockerfile`) starts from the published CANN 9.0.0 AscendHub tag, runs as `ma-user`, and layers Miniconda, a from-source LLVM under `/home/ma-user/LLVM`, and PyTorch / torch-npu wheels for cloud-oriented development.
 
-### 镜像信息
-
-- **基础镜像**：CANN 8.3 RC1 alpha003
-- **LLVM 版本**：19.1.7（从源码构建）
-- **Python 版本**：3.11
-
-### 主要特性
-
-- 🔧 从源码构建 LLVM/MLIR/Clang/LLD
-- 🎯 针对 AArch64 架构优化
-- 📦 包含完整的编译工具链
-- ⚡ 启用 ccache 加速编译
-
-### LLVM 构建配置
-
-```cmake
--DCMAKE_BUILD_TYPE=Release
--DLLVM_ENABLE_ASSERTIONS=ON
--DLLVM_ENABLE_PROJECTS="mlir;clang;lld"
--DLLVM_TARGETS_TO_BUILD="AArch64"
--DCMAKE_INSTALL_PREFIX=/opt/llvm
--DCMAKE_C_COMPILER=clang
--DCMAKE_CXX_COMPILER=clang++
--DLLVM_CCACHE_BUILD=ON
--DLLVM_USE_LINKER=lld
--DLLVM_INSTALL_UTILS=ON
--DLLVM_BUILD_TESTS=ON
-```
-
-### 构建要求
-
-需要准备 LLVM 源码包：
-```bash
-# 放置在 /tmp 目录
-llvm-project-19.1.7.src.tar.xz
-```
-
-### Python 依赖
-
-**构建工具**：
-```
-cmake>=3.20,<4.0
-ninja>=1.11.1
-pybind11==2.13.1
-setuptools>=71
-setuptools-scm>=8,<9
-wheel
-```
-
-**运行时依赖**：
-```
-attrs==24.2.0, numpy==1.26.4, scipy==1.13.1
-decorator==5.1.1, psutil==6.0.0
-pytest==8.3.2, pytest-xdist==3.6.1
-pyyaml, typing_extensions
-```
-
-### 环境变量
+Build and run details, including how to obtain matching CANN `.run` URLs, are in [pyasc/README.md](../pyasc/README.md).
 
 ```bash
-LLVM_INSTALL_PREFIX=/opt/llvm
+docker build \
+  -f pyasc/Dockerfile.ubuntu22.04 \
+  --build-arg CANN_TOOLKIT_URL='https://.../Ascend-cann-toolkit_....run' \
+  --build-arg CANN_OPS_URL='https://.../Ascend-cann-910b-ops_....run' \
+  -t pyasc-dev:ubuntu22.04 .
+
+docker build -f pyasc/9.0.0-910b-ubuntu22.04-py3.11.Dockerfile -t pyasc:9.0.0 .
 ```
 
-### 构建示例
+## verl
+
+Thin customization on top of a published Ascend veRL / vLLM stack image (`quay.io/ascend/verl` with CANN 9.0.0 and torch-npu). Use `verl/Dockerfile` when you need that training stack with repository-local adjustments rather than assembling the full dependency tree from scratch.
 
 ```bash
-# 准备源码包
-cp llvm-project-19.1.7.src.tar.xz /tmp/
-
-# 构建镜像（耗时较长，建议使用多核编译）
-docker build -f pyasc/dev-modelarts.Dockerfile -t pyasc:dev .
+docker build -f verl/Dockerfile -t verl:dev .
 ```
 
-### 构建时间
+## Choosing an image
 
-⏱️ LLVM 从源码构建大约需要 **2-4 小时**（取决于 CPU 核心数）
+For quick algorithm prototyping on Ascend, start with **asnumpy**. For MindSpore training, use the **mindspore** Dockerfile. For PyTorch on Ascend via a CANN base, pick a matching **cann** ModelArts or versioned tag (for example 8.3 RC1 alpha003 or a newer 9.x line). Compiler, MLIR, or PyASC host work belongs in **llvm** or the **pyasc** distribution developer images, depending on whether you need CANN installed in the same container. veRL / vLLM training stacks should use **verl**.
 
-### 适用场景
+Local root-oriented images typically omit a ModelArts suffix or use `*-base`; ModelArts deployments should use `*-modelarts` (or an equivalent `ma-user` setup) so UID/GID and home paths match the platform. Prefer the newest stable CANN line that your software supports; keep older Dockerfiles only when you must reproduce a pinned environment.
 
-- LLVM/MLIR 开发
-- 编译器后端开发
-- 深度定制的 NPU 编程
-- 编译优化研究
+## FAQ
 
----
+**Which CANN version should I use?** Prefer a current stable or project-required pin (many recent Dockerfiles target 8.5.x or 9.0.x). Reach for older tags such as 8.1 / 8.2 only when dependency compatibility demands it.
 
-## 版本选择指南
+**What is the difference between base and ModelArts images?** Toolchains are intended to match; the important differences are the default user (`root` vs `ma-user`), home directory layout, and where user-level tools such as pip write configuration. See [Image variants](../README.md#image-variants) in the root README.
 
-### 场景 1：快速开发和测试
+**Can I add `ma-user` to a base image myself?** Yes, but it is usually simpler and less error-prone to build the corresponding ModelArts Dockerfile.
 
-**推荐**：asnumpy 项目
-
-- 轻量级，构建快速
-- 包含常用开发工具
-- 适合算法原型开发
-
-### 场景 2：深度学习模型训练
-
-**推荐**：mindspore 或 cann-base 8.3 RC1 alpha003
-
-- MindSpore：华为框架，昇腾优化
-- CANN with PyTorch：使用 PyTorch API
-
-### 场景 3：编译器和工具链开发
-
-**推荐**：pyasc 或 cann-base 8.3 RC1
-
-- 完整的 LLVM 工具链
-- 支持深度定制
-- 包含调试和分析工具
-
-### 场景 4：生产部署
-
-**推荐**：根据使用的框架选择
-
-- 本地部署：使用 `*-base.Dockerfile`
-- ModelArts 部署：使用 `*-modelarts.Dockerfile`
-
-## 常见问题
-
-### Q: 如何选择 CANN 版本？
-
-A: 一般推荐使用最新的稳定版（8.3 RC1），除非有特定的兼容性需求。
-
-### Q: base 和 modelarts 版本有什么区别？
-
-A: 主要是用户权限和配置路径的差异，功能和工具链完全相同。详见[使用指南](usage-guide.md#版本差异)。
-
-### Q: 可以在 base 镜像中添加 ma-user 吗？
-
-A: 可以，但不推荐。建议直接使用对应的 modelarts 版本。
-
-### Q: 镜像太大怎么办？
-
-A: 可以考虑：
-1. 使用多阶段构建
-2. 移除不必要的工具
-3. 清理临时文件
-4. 使用 `.dockerignore`
-
+**How do I shrink image size?** Multi-stage builds, dropping unused packages, deleting build trees and package caches in the same `RUN` layer, and a tight `.dockerignore` are the usual levers. From-source LLVM and full scientific stacks will remain large by nature.

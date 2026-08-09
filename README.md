@@ -25,10 +25,10 @@ This repository collects versioned, reviewable Dockerfiles for Ascend-based work
 | Project | Description | Docs |
 |---------|-------------|------|
 | **asnumpy** | Development image for NumPy-like Ascend NPU APIs | [projects.md](docs/projects.md#asnumpy) |
-| **cann** | Multi-version CANN base and ModelArts images | [projects.md](docs/projects.md#cann-base) |
+| **cann** | Multi-version CANN base and ModelArts images | [projects.md](docs/projects.md#cann) |
 | **llvm** | LLVM 19.1.7, Clang, MLIR, and MLIR Python bindings from source | [llvm/README.md](llvm/README.md) |
 | **mindspore** | MindSpore on Ascend CANN | [projects.md](docs/projects.md#mindspore) |
-| **pyasc** | Python-for-Ascend toolchain and development environment | [projects.md](docs/projects.md#pyasc) |
+| **pyasc** | Python-for-Ascend toolchain and development environment | [pyasc/README.md](pyasc/README.md), [projects.md](docs/projects.md#pyasc) |
 | **verl** | veRL image tailored for Ascend / ModelArts | — |
 
 ## Quick start
@@ -51,7 +51,17 @@ docker build -f llvm/Dockerfile.openeuler22.03 -t llvm:19.1.7-openeuler22.03 llv
 # MindSpore
 docker build -f mindspore/2.7-cann8.2-modelarts.Dockerfile -t mindspore:2.7 .
 
-# PyASC
+# PyASC (upstream-style developer images; CANN .run URLs required)
+docker build -f pyasc/Dockerfile.ubuntu22.04 \
+  --build-arg CANN_TOOLKIT_URL='...' \
+  --build-arg CANN_OPS_URL='...' \
+  -t pyasc-dev:ubuntu22.04 .
+docker build -f pyasc/Dockerfile.openeuler22.03 \
+  --build-arg CANN_TOOLKIT_URL='...' \
+  --build-arg CANN_OPS_URL='...' \
+  -t pyasc-dev:openeuler22.03 .
+
+# PyASC ModelArts stack (CANN 9.0.0 base)
 docker build -f pyasc/9.0.0-910b-ubuntu22.04-py3.11.Dockerfile -t pyasc:9.0.0 .
 
 # veRL
