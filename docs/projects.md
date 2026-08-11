@@ -58,7 +58,7 @@ docker build -f mindspore/2.7-cann8.2-modelarts.Dockerfile -t mindspore:2.7 .
 
 PyASC (Python for Ascend) images live under `pyasc/`. There are two complementary styles.
 
-**Distribution developer images** (`Dockerfile.ubuntu22.04` and `Dockerfile.openeuler22.03`) start from stock Ubuntu 22.04 or openEuler 22.03, build CPython 3.11.15 and LLVM/MLIR 19.1.7 from source, then install CANN toolkit and ops packages supplied through the required build arguments `CANN_TOOLKIT_URL` and `CANN_OPS_URL`. Interactive shells source `/usr/local/Ascend/cann/set_env.sh` via `~/.bashrc`. LLVM is installed at `/opt/LLVM-19.1.7` (`LLVM_INSTALL_PREFIX`). These images are meant for self-contained local environments where you choose the CANN snapshot yourself.
+**Distribution developer images** cover Ubuntu 22.04/24.04 and openEuler 22.03/24.03. The LLVM images build CPython 3.11.15 and LLVM/MLIR 19.1.7 from source. The CANN master images install toolkit and ops packages supplied through the required build arguments `CANN_TOOLKIT_URL` and `CANN_OPS_URL`; the 24.x variants also compile the existing open-source `add_custom` operator as a build-time smoke test. Interactive shells source the installed CANN environment via `~/.bashrc`. These images are meant for self-contained local environments where you choose the CANN snapshot yourself.
 
 **ModelArts stack image** (`9.0.0-910b-ubuntu22.04-py3.11.Dockerfile`) starts from the published CANN 9.0.0 AscendHub tag, runs as `ma-user`, and layers Miniconda, a from-source LLVM under `/home/ma-user/LLVM`, and PyTorch / torch-npu wheels for cloud-oriented development.
 

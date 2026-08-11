@@ -47,6 +47,8 @@ docker build -f cann/8.3.RC1-base.Dockerfile -t cann:8.3-base .
 # LLVM 19.1.7 (Ubuntu 22.04 / openEuler 22.03)
 docker build -f llvm/Dockerfile.ubuntu22.04 -t llvm:19.1.7-ubuntu22.04 llvm
 docker build -f llvm/Dockerfile.openeuler22.03 -t llvm:19.1.7-openeuler22.03 llvm
+docker build -f llvm/Dockerfile.ubuntu24.04 -t llvm:19.1.7-ubuntu24.04 llvm
+docker build -f llvm/Dockerfile.openeuler24.03 -t llvm:19.1.7-openeuler24.03 llvm
 
 # MindSpore
 docker build -f mindspore/2.7-cann8.2-modelarts.Dockerfile -t mindspore:2.7 .

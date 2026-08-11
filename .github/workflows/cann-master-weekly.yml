@@ -1,4 +1,4 @@
-# Weekly CANN master image build for Ubuntu 22.04 and openEuler 22.03.
+# Weekly CANN master image build for the supported Ubuntu/openEuler releases.
 # Publishes rolling weekly tags only, e.g. cann:master-910b-ubuntu22.04
 #
 # Uses GitHub-hosted runners (amd64 + arm64). ARM labels require a public repository.
@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu22.04, openeuler22.03]
+        os: [ubuntu22.04, ubuntu24.04, openeuler22.03, openeuler24.03]
         arch_tag: [amd64, arm64]
         include:
           - arch_tag: amd64
@@ -95,7 +95,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for OS_TAG in ubuntu22.04 openeuler22.03; do
+          for OS_TAG in ubuntu22.04 ubuntu24.04 openeuler22.03 openeuler24.03; do
             IMAGE_TAG="${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/cann:master-${CANN_CHIP}-${OS_TAG}"
 
             docker buildx imagetools create \
