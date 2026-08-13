@@ -1,6 +1,6 @@
 site_name: Ascend Container Images
 site_description: Dockerfiles for Huawei Ascend CANN, LLVM/MLIR, MindSpore, PyASC, veRL, and asnumpy.
-site_url: https://wuzhenqing.github.io/dockerfile/
+site_url: https://docker.infrae.top/
 repo_name: wuzhenqing/dockerfile
 repo_url: https://github.com/wuzhenqing/dockerfile
 
