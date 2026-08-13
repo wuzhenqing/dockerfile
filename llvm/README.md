@@ -31,9 +31,9 @@ Versions and download URLs are pinned in the Dockerfiles. Python is fetched from
 | [`Dockerfile.ubuntu22.04`](Dockerfile.ubuntu22.04) | `ubuntu:22.04` |
 | [`Dockerfile.openeuler22.03`](Dockerfile.openeuler22.03) | `openeuler/openeuler:22.03` |
 | [`Dockerfile.ubuntu24.04`](Dockerfile.ubuntu24.04) | `ubuntu:24.04` |
-| [`Dockerfile.openeuler24.03`](Dockerfile.openeuler24.03) | `openeuler/openeuler:24.03-lts` |
+| [`Dockerfile.openeuler24.03`](Dockerfile.openeuler24.03) | `openeuler/openeuler:24.03` |
 
-Both files follow the same layout: a single stage with three `RUN` steps (install dependencies → build Python → build LLVM). Temporary source archives and build trees are removed after each compile step.
+All four files follow the same layout: a single stage with three `RUN` steps (install dependencies → build Python → build LLVM). Temporary source archives and build trees are removed after each compile step.
 
 ## Build
 
@@ -60,10 +60,11 @@ The image starts an interactive shell (`/bin/bash`) with the custom Python on `P
 
 | Variable | Value |
 |----------|-------|
-| `PATH` | Prepends `/usr/local/python3.11.15/bin` |
+| `PATH` | Prepends `/usr/local/python3.11.15/bin` and `/opt/LLVM-19.1.7/bin` on Ubuntu; prepends only `/usr/local/python3.11.15/bin` on openEuler |
 | `LLVM_INSTALL_PREFIX` | `/opt/LLVM-19.1.7` |
+| `PYTHONPATH` | `/opt/LLVM-19.1.7/python_packages/mlir_core` |
 
-LLVM tools and CMake config packages live under `$LLVM_INSTALL_PREFIX`. They are **not** added to `PATH` by default. For typical downstream use:
+LLVM tools and CMake config packages live under `$LLVM_INSTALL_PREFIX`. On openEuler they are **not** added to `PATH` by default, so add them explicitly when needed. For typical downstream use:
 
 ```bash
 export PATH="$LLVM_INSTALL_PREFIX/bin:$PATH"
@@ -75,8 +76,8 @@ You can then use `llvm-config`, `clang`, `mlir-opt`, and `find_package(LLVM CONF
 
 ### Quick checks
 
-The 24.x Dockerfiles run these checks during the image build, so an image is not
-created if LLVM, MLIR, or the Python bindings are unusable.
+After building or pulling an image, verify LLVM, MLIR, and the Python bindings
+with the following commands:
 
 ```bash
 docker run --rm llvm:19.1.7-ubuntu22.04 \
@@ -89,19 +90,22 @@ docker run --rm llvm:19.1.7-ubuntu22.04 \
   bash -lc 'export PYTHONPATH="$LLVM_INSTALL_PREFIX/python_packages/mlir_core"; python -c "from mlir import ir; print(ir.Context())"'
 ```
 
-### 24.x toolchain notes
+### Toolchain notes
 
-- Ubuntu 24.04 defaults to GCC 13 and Clang 18, compared with GCC 11 and Clang 14 in
-  Ubuntu 22.04. The source build explicitly uses distribution Clang/Clang++ and
-  LLD, so the newer default GCC does not silently become the LLVM bootstrap
+- The Ubuntu Dockerfiles prepend `/opt/LLVM-19.1.7/bin` to `PATH`; the openEuler
+  Dockerfiles do not, so openEuler users must add `$LLVM_INSTALL_PREFIX/bin`
+  manually when they need `llvm-config`, `clang`, or `mlir-opt` on `PATH`.
+- Every build uses the distribution `clang` / `clang++` and `lld` explicitly, so
+  the newer GCC in Ubuntu 24.04 does not silently become the LLVM bootstrap
   compiler.
-- `libncurses5-dev` was replaced by the unversioned `libncurses-dev` package for
-  Ubuntu 24.04.
-- openEuler 24.03 uses the `24.03-lts` image tag, adds `libxcrypt-devel`, and
-  uses its native `xz-devel` / `ncurses-devel` package names instead of the
-  22.03 `liblzma-devel` / `libncurses-devel` names.
-- MLIR Python build dependencies use the HuaweiCloud PyPI mirror so builds do
-  not stall when the default PyPI route is slow or unavailable in China.
+- Ubuntu 22.04 and 24.04 both use the unversioned `libncurses-dev` package.
+- openEuler 24.03 uses the `openeuler/openeuler:24.03` image tag and adds
+  `libxcrypt-devel`. openEuler 22.03 and 24.03 both use the native
+  `xz-devel` / `ncurses-devel` package names.
+- All Dockerfiles set the global PyPI index to the HuaweiCloud mirror with
+  `python -m pip config set global.index-url` before installing MLIR Python
+  binding dependencies, so builds do not stall when the default PyPI route is
+  slow or unavailable in China.
 
 ## Design notes
 

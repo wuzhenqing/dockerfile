@@ -1,7 +1,6 @@
 FROM ubuntu:22.04
 
 USER root
-
 WORKDIR /root
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -18,7 +17,7 @@ RUN apt-get update && \
         libbz2-dev \
         libffi-dev \
         liblzma-dev \
-        libncurses5-dev \
+        libncurses-dev \
         libreadline-dev \
         libsqlite3-dev \
         libssl-dev \
@@ -32,16 +31,19 @@ RUN apt-get update && \
         zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 
-RUN wget https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
-    tar -xvf Python-3.11.15.tar.xz && cd Python-3.11.15 && \
-    mkdir -p /usr/local/python3.11.15/lib && \
-    ./configure --enable-shared LDFLAGS="-Wl,-rpath /usr/local/python3.11.15/lib" --prefix=/usr/local/python3.11.15 && \
+RUN wget -q https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
+    tar -xf Python-3.11.15.tar.xz && \
+    cd Python-3.11.15 && \
+    ./configure --enable-shared \
+        LDFLAGS="-Wl,-rpath,/usr/local/python3.11.15/lib" \
+        --prefix=/usr/local/python3.11.15 && \
     make -j"$(nproc)" && \
     make altinstall && \
-    ln -sf /usr/local/python3.11.15/bin/python3.11 /usr/local/python3.11.15/bin/python3 && \
-    ln -sf /usr/local/python3.11.15/bin/pip3.11 /usr/local/python3.11.15/bin/pip3 && \
-    ln -sf /usr/local/python3.11.15/bin/python3 /usr/local/python3.11.15/bin/python && \
-    ln -sf /usr/local/python3.11.15/bin/pip3 /usr/local/python3.11.15/bin/pip && \
+    ln -sf python3.11 /usr/local/python3.11.15/bin/python3 && \
+    ln -sf pip3.11 /usr/local/python3.11.15/bin/pip3 && \
+    ln -sf python3 /usr/local/python3.11.15/bin/python && \
+    ln -sf pip3 /usr/local/python3.11.15/bin/pip && \
+    cd /root && \
     cd /root && rm Python-3.11.15.tar.xz && rm -rf Python-3.11.15
 
 ENV PATH=/usr/local/python3.11.15/bin:$PATH

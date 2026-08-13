@@ -1,7 +1,6 @@
 FROM ubuntu:22.04
 
 USER root
-
 WORKDIR /root
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -18,7 +17,7 @@ RUN apt-get update && \
         libbz2-dev \
         libffi-dev \
         liblzma-dev \
-        libncurses5-dev \
+        libncurses-dev \
         libreadline-dev \
         libsqlite3-dev \
         libssl-dev \
@@ -32,28 +31,33 @@ RUN apt-get update && \
         zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 
-RUN wget https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
-    tar -xvf Python-3.11.15.tar.xz && cd Python-3.11.15 && \
-    mkdir -p /usr/local/python3.11.15/lib && \
-    ./configure --enable-shared LDFLAGS="-Wl,-rpath /usr/local/python3.11.15/lib" --prefix=/usr/local/python3.11.15 && \
+RUN wget -q https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
+    tar -xf Python-3.11.15.tar.xz && \
+    cd Python-3.11.15 && \
+    ./configure --enable-shared \
+        LDFLAGS="-Wl,-rpath,/usr/local/python3.11.15/lib" \
+        --prefix=/usr/local/python3.11.15 && \
     make -j"$(nproc)" && \
     make altinstall && \
-    ln -sf /usr/local/python3.11.15/bin/python3.11 /usr/local/python3.11.15/bin/python3 && \
-    ln -sf /usr/local/python3.11.15/bin/pip3.11 /usr/local/python3.11.15/bin/pip3 && \
-    ln -sf /usr/local/python3.11.15/bin/python3 /usr/local/python3.11.15/bin/python && \
-    ln -sf /usr/local/python3.11.15/bin/pip3 /usr/local/python3.11.15/bin/pip && \
+    ln -sf python3.11 /usr/local/python3.11.15/bin/python3 && \
+    ln -sf pip3.11 /usr/local/python3.11.15/bin/pip3 && \
+    ln -sf python3 /usr/local/python3.11.15/bin/python && \
+    ln -sf pip3 /usr/local/python3.11.15/bin/pip && \
+    cd /root && \
     cd /root && rm Python-3.11.15.tar.xz && rm -rf Python-3.11.15
 
-ENV PATH=/usr/local/python3.11.15/bin:$PATH
-ENV LLVM_INSTALL_PREFIX=/opt/LLVM-19.1.7
+ENV PATH=/usr/local/python3.11.15/bin:$PATH \
+    LLVM_INSTALL_PREFIX=/opt/LLVM-19.1.7 \
+    PYTHONPATH=/opt/LLVM-19.1.7/python_packages/mlir_core
 
 RUN wget -q https://llvm-project.obs.cn-southwest-2.myhuaweicloud.com/llvm-project-19.1.7.src.tar.xz && \
-    tar -xvf llvm-project-19.1.7.src.tar.xz && \
+    tar -xf llvm-project-19.1.7.src.tar.xz && \
     cd llvm-project-19.1.7.src && \
+    python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple && \
     python -m pip install --no-cache-dir -r mlir/python/requirements.txt && \
     cmake -S llvm -B build -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=${LLVM_INSTALL_PREFIX} \
+        -DCMAKE_INSTALL_PREFIX="${LLVM_INSTALL_PREFIX}" \
         -DCMAKE_C_COMPILER=clang \
         -DCMAKE_CXX_COMPILER=clang++ \
         -DLLVM_ENABLE_LLD=ON \
@@ -63,10 +67,9 @@ RUN wget -q https://llvm-project.obs.cn-southwest-2.myhuaweicloud.com/llvm-proje
         -DLLVM_ENABLE_ASSERTIONS=ON \
         -DLLVM_INSTALL_UTILS=ON \
         -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
-        -DPython3_EXECUTABLE=$(which python3) \
+        -DPython3_EXECUTABLE="$(command -v python3)" \
         -DPython3_FIND_STRATEGY=LOCATION && \
-    ninja -C build -j$(nproc) && \
-    ninja -C build install && \
+    ninja -C build -j"$(nproc)" install && \
     cd /root && rm llvm-project-19.1.7.src.tar.xz && rm -rf llvm-project-19.1.7.src
 
 CMD ["/bin/bash"]

@@ -1,7 +1,6 @@
 FROM openeuler/openeuler:22.03
 
 USER root
-
 WORKDIR /root
 
 RUN dnf install -y \
@@ -17,8 +16,8 @@ RUN dnf install -y \
         lld \
         llvm \
         libffi-devel \
-        liblzma-devel \
-        libncurses-devel \
+        libxcrypt-devel \
+        ncurses-devel \
         libzstd-devel \
         make \
         ninja-build \
@@ -27,21 +26,22 @@ RUN dnf install -y \
         readline-devel \
         sqlite-devel \
         wget \
-        xz \
+        xz-devel \
         zlib-devel && \
     dnf clean all && \
     rm -rf /var/cache/dnf
 
-RUN wget https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
-    tar -xvf Python-3.11.15.tar.xz && cd Python-3.11.15 && \
-    mkdir -p /usr/local/python3.11.15/lib && \
-    ./configure --enable-shared LDFLAGS="-Wl,-rpath /usr/local/python3.11.15/lib" --prefix=/usr/local/python3.11.15 && \
+RUN wget -q https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
+    tar -xf Python-3.11.15.tar.xz && cd Python-3.11.15 && \
+    ./configure --enable-shared \
+        LDFLAGS="-Wl,-rpath,/usr/local/python3.11.15/lib" \
+        --prefix=/usr/local/python3.11.15 && \
     make -j"$(nproc)" && \
     make altinstall && \
-    ln -sf /usr/local/python3.11.15/bin/python3.11 /usr/local/python3.11.15/bin/python3 && \
-    ln -sf /usr/local/python3.11.15/bin/pip3.11 /usr/local/python3.11.15/bin/pip3 && \
-    ln -sf /usr/local/python3.11.15/bin/python3 /usr/local/python3.11.15/bin/python && \
-    ln -sf /usr/local/python3.11.15/bin/pip3 /usr/local/python3.11.15/bin/pip && \
+    ln -sf python3.11 /usr/local/python3.11.15/bin/python3 && \
+    ln -sf pip3.11 /usr/local/python3.11.15/bin/pip3 && \
+    ln -sf python3 /usr/local/python3.11.15/bin/python && \
+    ln -sf pip3 /usr/local/python3.11.15/bin/pip && \
     cd /root && rm Python-3.11.15.tar.xz && rm -rf Python-3.11.15
 
 ENV PATH=/usr/local/python3.11.15/bin:$PATH

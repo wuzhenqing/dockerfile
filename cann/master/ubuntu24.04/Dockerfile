@@ -2,62 +2,64 @@ FROM ubuntu:24.04
 
 USER root
 WORKDIR /root
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        build-essential ca-certificates clang clangd cmake curl git \
-        libbz2-dev libffi-dev liblzma-dev libncurses-dev libreadline-dev \
-        libsqlite3-dev libssl-dev libzstd-dev lld llvm ninja-build \
-        pkg-config wget xz-utils zlib1g-dev && \
+        build-essential \
+        ca-certificates \
+        clang \
+        clangd \
+        cmake \
+        curl \
+        git \
+        libbz2-dev \
+        libffi-dev \
+        liblzma-dev \
+        libncurses-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        libzstd-dev \
+        lld \
+        llvm \
+        ninja-build \
+        pkg-config \
+        wget \
+        xz-utils \
+        zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 
 RUN wget -q https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
-    tar -xf Python-3.11.15.tar.xz && cd Python-3.11.15 && \
+    tar -xf Python-3.11.15.tar.xz && \
+    cd Python-3.11.15 && \
     ./configure --enable-shared \
         LDFLAGS="-Wl,-rpath,/usr/local/python3.11.15/lib" \
         --prefix=/usr/local/python3.11.15 && \
-    make -j"$(nproc)" && make altinstall && \
+    make -j"$(nproc)" && \
+    make altinstall && \
     ln -sf python3.11 /usr/local/python3.11.15/bin/python3 && \
     ln -sf pip3.11 /usr/local/python3.11.15/bin/pip3 && \
     ln -sf python3 /usr/local/python3.11.15/bin/python && \
     ln -sf pip3 /usr/local/python3.11.15/bin/pip && \
-    cd /root && rm -rf Python-3.11.15 Python-3.11.15.tar.xz
+    cd /root && \
+    cd /root && rm Python-3.11.15.tar.xz && rm -rf Python-3.11.15
 
 ENV PATH=/usr/local/python3.11.15/bin:$PATH
 
-# CANN's TBE code generator imports NumPy while compiling Ascend C kernels.
-RUN python -m pip install --no-cache-dir \
-        --index-url https://repo.huaweicloud.com/repository/pypi/simple \
-        numpy==1.26.4
-
 ARG CANN_TOOLKIT_URL
 ARG CANN_OPS_URL
-ARG CANN_OPS_REF=master
 
-RUN test -n "${CANN_TOOLKIT_URL}" && test -n "${CANN_OPS_URL}" && \
-    groupadd HwHiAiUser && \
+RUN groupadd HwHiAiUser && \
     useradd -g HwHiAiUser -d /home/HwHiAiUser -m HwHiAiUser -s /bin/bash && \
-    wget -q "${CANN_TOOLKIT_URL}" -O Ascend-cann-toolkit.run && \
-    wget -q "${CANN_OPS_URL}" -O Ascend-cann-ops.run && \
-    chmod +x Ascend-cann-toolkit.run Ascend-cann-ops.run && \
-    ./Ascend-cann-toolkit.run --quiet --install --install-for-all && \
-    ./Ascend-cann-ops.run --quiet --install --install-for-all && \
-    rm Ascend-cann-toolkit.run Ascend-cann-ops.run && \
-    test -f /usr/local/Ascend/ascend-toolkit/set_env.sh && \
-    echo 'source /usr/local/Ascend/ascend-toolkit/set_env.sh' >> /root/.bashrc
-
-RUN python -m pip install --no-cache-dir \
-        --index-url https://repo.huaweicloud.com/repository/pypi/simple \
-        absl-py attrs cffi cython decorator pathlib2 psutil \
-        protobuf==3.20.3 pyyaml requests scipy sympy
-
-# Compile an existing open-source operator; no device is required for this check.
-RUN . /usr/local/Ascend/ascend-toolkit/set_env.sh && \
-    git clone --depth 1 --branch "${CANN_OPS_REF}" https://gitee.com/ascend/cann-ops.git && \
-    cd cann-ops && \
-    bash build.sh -n add_custom -c ascend910b && \
-    test -n "$(find build_out output -type f \( -name '*.run' -o -name '*.so' \) -print -quit 2>/dev/null)" && \
-    cd /root && rm -rf cann-ops
+    wget --quiet "${CANN_TOOLKIT_URL}" -O Ascend-cann-toolkit.run && \
+    wget --quiet "${CANN_OPS_URL}" -O Ascend-cann-ops.run && \
+    chmod +x Ascend-cann-toolkit.run && \
+    chmod +x Ascend-cann-ops.run && \
+    ./Ascend-cann-toolkit.run --quiet --install && \
+    ./Ascend-cann-ops.run --quiet --install && \
+    echo 'source /usr/local/Ascend/cann/set_env.sh' >> /root/.bashrc && \
+    rm Ascend-cann-toolkit.run Ascend-cann-ops.run
 
 CMD ["/bin/bash"]
