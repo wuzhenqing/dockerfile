@@ -18,3 +18,8 @@
 clang+llvm-*.tar.xz
 llvm-project-*.src.tar.xz
 Miniconda*.sh
+
+# Local development environment and build output
+.venv/
+site/
+

@@ -1,6 +1,6 @@
 # Project notes
 
-Background and configuration notes for each image family in this repository. For build commands and layout overview, start with the [root README](../README.md). Naming rules live in [naming-conventions.md](naming-conventions.md).
+Background and configuration notes for each image family in this repository. For build commands and layout overview, start with the [root README](index.md). Naming rules live in [naming-conventions.md](naming-conventions.md).
 
 ## asnumpy
 
@@ -16,7 +16,7 @@ Prefer this image when you want a relatively light Ascend development shell for 
 
 ## cann
 
-CANN (Compute Architecture for Neural Networks) is Huawei Ascend’s runtime and toolkit layer. The `cann/` directory holds versioned Dockerfiles that layer developer tooling on top of published CANN base images, covering both local `root` images and ModelArts `ma-user` variants. Rolling builds from the CANN `master` channel are documented separately in [cann/master/README.md](../cann/master/README.md).
+CANN (Compute Architecture for Neural Networks) is Huawei Ascend’s runtime and toolkit layer. The `cann/` directory holds versioned Dockerfiles that layer developer tooling on top of published CANN base images, covering both local `root` images and ModelArts `ma-user` variants. Rolling builds from the CANN `master` channel are documented separately in [cann/master/README.md](https://github.com/wuzhenqing/dockerfile/blob/main/cann/master/README.md).
 
 Representative files:
 
@@ -42,7 +42,7 @@ Older tags are kept mainly for reproducing historical environments and dependenc
 
 From-source LLVM 19.1.7 images (Clang, MLIR, and MLIR Python bindings) on Ubuntu 22.04 and openEuler 22.03, including a matching CPython 3.11.15 build. These images do not install CANN; they are intentional bases for compiler and binding work.
 
-Full build options, install paths, and usage notes are in [llvm/README.md](../llvm/README.md).
+Full build options, install paths, and usage notes are in [llvm/README.md](https://github.com/wuzhenqing/dockerfile/blob/main/llvm/README.md).
 
 ## mindspore
 
@@ -62,7 +62,7 @@ PyASC (Python for Ascend) images live under `pyasc/`. There are two complementar
 
 **ModelArts stack image** (`9.0.0-910b-ubuntu22.04-py3.11.Dockerfile`) starts from the published CANN 9.0.0 AscendHub tag, runs as `ma-user`, and layers Miniconda, a from-source LLVM under `/home/ma-user/LLVM`, and PyTorch / torch-npu wheels for cloud-oriented development.
 
-Build and run details, including how to obtain matching CANN `.run` URLs, are in [pyasc/README.md](../pyasc/README.md).
+Build and run details, including how to obtain matching CANN `.run` URLs, are in [pyasc/README.md](https://github.com/wuzhenqing/dockerfile/blob/main/pyasc/README.md).
 
 ```bash
 docker build \
@@ -92,7 +92,7 @@ Local root-oriented images typically omit a ModelArts suffix or use `*-base`; Mo
 
 **Which CANN version should I use?** Prefer a current stable or project-required pin (many recent Dockerfiles target 8.5.x or 9.0.x). Reach for older tags such as 8.1 / 8.2 only when dependency compatibility demands it.
 
-**What is the difference between base and ModelArts images?** Toolchains are intended to match; the important differences are the default user (`root` vs `ma-user`), home directory layout, and where user-level tools such as pip write configuration. See [Image variants](../README.md#image-variants) in the root README.
+**What is the difference between base and ModelArts images?** Toolchains are intended to match; the important differences are the default user (`root` vs `ma-user`), home directory layout, and where user-level tools such as pip write configuration. See [Image variants](index.md#image-variants) in the root README.
 
 **Can I add `ma-user` to a base image myself?** Yes, but it is usually simpler and less error-prone to build the corresponding ModelArts Dockerfile.
 
