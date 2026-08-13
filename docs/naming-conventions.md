@@ -1,85 +1,85 @@
-# 命名规范
+# Naming Conventions
 
-本文档说明项目中 Dockerfile 的命名规则和组织方式。
+This document describes how Dockerfiles in this repository are named and organized.
 
-## 目录结构原则
+## Directory layout principles
 
-项目采用**按项目分类的目录结构**：
+The repository uses a **project-based directory layout**:
 
-- 每个项目有独立的目录
-- 同一项目的不同版本放在同一目录下
-- 通过文件名区分不同的平台版本
+- Each project has its own directory.
+- Different versions of the same project live in the same directory.
+- Platform or variant differences are expressed through the filename.
 
-## Dockerfile 命名格式
+## Dockerfile naming format
 
-### 基本格式
+### Basic format
 
+```text
+{version-tag}-{platform-tag}.Dockerfile
 ```
-{版本标识}-{平台标识}.Dockerfile
-```
 
-### 平台标识
+### Platform tags
 
-#### `base` - 基础版本
+#### `base` — base/local variant
 
-- **用户**：root
-- **工作目录**：`/root`
-- **pip 配置**：全局配置（`pip config set`）
-- **适用场景**：
-  - 本地开发环境
-  - 测试环境
-  - 需要完整 root 权限的场景
-  - 自由度高的开发调试
+- **User**: `root`
+- **Working directory**: `/root`
+- **pip configuration**: global (`pip config set`)
+- **Use cases**:
+  - Local development environments
+  - Test environments
+  - Scenarios that need full root privileges
+  - Flexible debugging and experimentation
 
-#### `modelarts` - ModelArts 版本
+#### `modelarts` — ModelArts variant
 
-- **用户**：ma-user (UID 1000, GID 100)
-- **工作目录**：`/home/ma-user`
-- **pip 配置**：用户级配置（`pip config --user set`）
-- **适用场景**：
-  - 华为云 ModelArts 平台
-  - 需要特定用户权限的云环境
-  - 多租户环境
+- **User**: `ma-user` (UID 1000, GID 100)
+- **Working directory**: `/home/ma-user`
+- **pip configuration**: user-level (`pip config --user set`)
+- **Use cases**:
+  - Huawei Cloud ModelArts platform
+  - Cloud environments that require a specific user identity
+  - Multi-tenant environments
 
-### 命名示例
+### Naming examples
 
-#### 通用项目
+#### Generic projects
 
-| 文件名 | 说明 |
-|--------|------|
-| `dev-base.Dockerfile` | 开发环境的基础版本 |
-| `dev-modelarts.Dockerfile` | 开发环境的 ModelArts 版本 |
-| `prod-base.Dockerfile` | 生产环境的基础版本 |
-| `prod-modelarts.Dockerfile` | 生产环境的 ModelArts 版本 |
+| Filename | Description |
+|----------|-------------|
+| `dev-base.Dockerfile` | Base development image |
+| `dev-modelarts.Dockerfile` | ModelArts development image |
+| `prod-base.Dockerfile` | Base production image |
+| `prod-modelarts.Dockerfile` | ModelArts production image |
 
-#### 版本化项目（如 CANN）
+#### Versioned projects (e.g. CANN)
 
-| 文件名 | 说明 |
-|--------|------|
-| `8.3.RC1-base.Dockerfile` | CANN 8.3 RC1 的基础版本 |
-| `8.3.RC1.alpha003-modelarts.Dockerfile` | CANN 8.3 RC1 alpha003 的 ModelArts 版本 |
-| `8.2.RC1.alpha002-modelarts.Dockerfile` | CANN 8.2 RC1 alpha002 的 ModelArts 版本 |
+| Filename | Description |
+|----------|-------------|
+| `8.3.RC1-base.Dockerfile` | CANN 8.3 RC1 base image |
+| `8.3.RC1.alpha003-modelarts.Dockerfile` | CANN 8.3 RC1 alpha003 ModelArts image |
+| `8.2.RC1.alpha002-modelarts.Dockerfile` | CANN 8.2 RC1 alpha002 ModelArts image |
 
-#### 框架项目（包含多个依赖版本）
+#### Framework projects (multiple dependency versions)
 
-| 文件名 | 说明 |
-|--------|------|
-| `2.7-cann8.2-modelarts.Dockerfile` | MindSpore 2.7 + CANN 8.2 的 ModelArts 版本 |
-| `3.0-cann8.3-base.Dockerfile` | 假设的 MindSpore 3.0 + CANN 8.3 基础版本 |
+| Filename | Description |
+|----------|-------------|
+| `2.7-cann8.2-modelarts.Dockerfile` | MindSpore 2.7 + CANN 8.2 ModelArts image |
+| `3.0-cann8.3-base.Dockerfile` | Hypothetical MindSpore 3.0 + CANN 8.3 base image |
 
-## 环境标识说明
+## Environment tags
 
-常用的环境标识：
+Common environment identifiers:
 
-- **`dev`** - 开发环境，包含完整的开发工具和调试工具
-- **`prod`** - 生产环境，精简的运行时环境
-- **`test`** - 测试环境，包含测试工具和框架
+- **`dev`** — development environment with full tooling and debug utilities
+- **`prod`** — production environment with a minimal runtime footprint
+- **`test`** — test environment with testing tools and frameworks
 
-## 目录组织示例
+## Directory organization examples
 
-### 单项目结构
+### Single-project structure
 
-```
+```text
 project-name/
 ├── dev-base.Dockerfile
 ├── dev-modelarts.Dockerfile
@@ -87,9 +87,9 @@ project-name/
 └── prod-modelarts.Dockerfile
 ```
 
-### 多版本项目结构
+### Multi-version project structure
 
-```
+```text
 project-name/
 ├── 1.0-base.Dockerfile
 ├── 1.0-modelarts.Dockerfile
@@ -99,109 +99,109 @@ project-name/
     └── helper.sh
 ```
 
-## 配套文件命名
+## Supporting file names
 
-### 脚本文件
+### Scripts
 
-- `entrypoint.sh` - 容器启动脚本
-- `setup.sh` - 环境配置脚本
-- `build.sh` - 构建辅助脚本
+- `entrypoint.sh` — container startup script
+- `setup.sh` — environment setup script
+- `build.sh` — build helper script
 
-### 配置文件
+### Configuration files
 
-- `config.yaml` - 配置文件
-- `requirements.txt` - Python 依赖
-- `packages.list` - 系统包列表
+- `config.yaml` — configuration file
+- `requirements.txt` — Python dependencies
+- `packages.list` — system package list
 
-## 添加新项目
+## Adding a new project
 
-当添加新项目时，请遵循以下步骤：
+Follow these steps when adding a new project:
 
-1. **创建项目目录**
+1. **Create the project directory**
 
-```bash
-mkdir project-name/
-```
+   ```bash
+   mkdir project-name/
+   ```
 
-2. **创建基础版本 Dockerfile**
+2. **Create the base Dockerfile**
 
-```bash
-touch project-name/dev-base.Dockerfile
-```
+   ```bash
+   touch project-name/dev-base.Dockerfile
+   ```
 
-3. **创建 ModelArts 版本 Dockerfile**
+3. **Create the ModelArts Dockerfile**
 
-```bash
-touch project-name/dev-modelarts.Dockerfile
-```
+   ```bash
+   touch project-name/dev-modelarts.Dockerfile
+   ```
 
-4. **确保两个版本同步**
+4. **Keep the two variants in sync**
 
-除了用户相关配置外，两个版本应保持相同的：
-- 系统包
-- Python 包
-- 工具链
-- 环境变量（除用户路径外）
+   Except for user-specific settings, the base and ModelArts variants should share the same:
 
-5. **更新主 README**
+   - System packages
+   - Python packages
+   - Toolchain
+   - Environment variables (except user paths)
 
-在项目列表中添加新项目的说明
+5. **Update the main README**
 
-## 版本管理建议
+   Add the new project to the project list in `README.md`.
 
-### Git 标签
+## Version management recommendations
 
-为重要版本创建 Git 标签：
+### Git tags
+
+Create Git tags for important releases:
 
 ```bash
 git tag -a v1.0.0 -m "Release version 1.0.0"
 git push origin v1.0.0
 ```
 
-### Docker 镜像标签
+### Docker image tags
 
-构建镜像时使用清晰的标签：
+Use clear, descriptive tags when building images:
 
 ```bash
-# 语义化版本
+# Semantic version
 docker tag image:latest image:v1.0.0
 
-# 包含构建信息
+# Build information included
 docker tag image:latest image:v1.0.0-cann8.3-py3.11-ubuntu22.04
 
-# 便捷标签
+# Convenience tags
 docker tag image:v1.0.0 image:v1.0
 docker tag image:v1.0.0 image:v1
 docker tag image:v1.0.0 image:latest
 ```
 
-## 最佳实践
+## Best practices
 
-1. **保持一致性** - 所有项目使用相同的命名规则
-2. **语义清晰** - 文件名应该自解释，不需要额外说明
-3. **避免冗余** - 不要在文件名中重复项目名称（因为已经在目录中）
-4. **版本号清晰** - 使用官方版本号，不要自创版本标识
-5. **及时更新文档** - 添加新项目后立即更新文档
+1. **Stay consistent** — use the same naming rules across all projects.
+2. **Be self-descriptive** — filenames should explain themselves without extra context.
+3. **Avoid redundancy** — do not repeat the project name in the filename; it is already in the directory name.
+4. **Use official version numbers** — do not invent custom version identifiers.
+5. **Keep documentation updated** — update docs immediately when adding new projects or variants.
 
-## 反模式（避免）
+## Anti-patterns (avoid)
 
-❌ 不好的命名：
+:x: Bad names:
 
+```text
+Dockerfile                          # unclear
+Dockerfile.bak                      # backup files should not be committed
+asnumpy-dev-base.Dockerfile         # repeats the project name
+cann_8.3_rc1_base.Dockerfile        # uses underscores, inconsistent
+8.3-modelarts-final.Dockerfile      # "final" is ambiguous
 ```
-Dockerfile                          # 不明确
-Dockerfile.bak                      # 备份文件不应该存在
-asnumpy-dev-base.Dockerfile         # 项目名重复（已在目录中）
-cann_8.3_rc1_base.Dockerfile        # 使用下划线，不一致
-8.3-modelarts-final.Dockerfile      # "final" 含义不明确
-```
 
-✅ 好的命名：
+:white_check_mark: Good names:
 
-```
+```text
 dev-base.Dockerfile
 dev-modelarts.Dockerfile
 8.3.RC1-base.Dockerfile
 8.3.RC1.alpha003-modelarts.Dockerfile
 2.7-cann8.2-modelarts.Dockerfile
 ```
-
