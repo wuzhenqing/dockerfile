@@ -1,42 +1,42 @@
 # Copyright (c) 2026 wuzhenqing
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04
+FROM openeuler/openeuler:24.03
 
 USER root
+
 WORKDIR /root
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
+RUN dnf install -y \
+        bzip2-devel \
         ca-certificates \
         clang \
-        clangd \
+        clang-tools-extra \
         cmake \
         curl \
+        gcc \
+        gcc-c++ \
         git \
-        libbz2-dev \
-        libffi-dev \
-        liblzma-dev \
-        libncurses-dev \
-        libreadline-dev \
-        libsqlite3-dev \
-        libssl-dev \
-        libzstd-dev \
         lld \
         llvm \
+        libffi-devel \
+        libxcrypt-devel \
+        ncurses-devel \
+        libzstd-devel \
+        make \
         ninja-build \
-        pkg-config \
+        openssl-devel \
+        pkgconf-pkg-config \
+        readline-devel \
+        sqlite-devel \
         wget \
-        xz-utils \
-        zlib1g-dev && \
-    rm -rf /var/lib/apt/lists/*
+        xz-devel \
+        zlib-devel && \
+    dnf clean all && \
+    rm -rf /var/cache/dnf
 
 RUN wget -q https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz && \
-    tar -xf Python-3.11.15.tar.xz && \
-    cd Python-3.11.15 && \
+    tar -xf Python-3.11.15.tar.xz && cd Python-3.11.15 && \
     ./configure --enable-shared \
         LDFLAGS="-Wl,-rpath,/usr/local/python3.11.15/lib" \
         --prefix=/usr/local/python3.11.15 && \

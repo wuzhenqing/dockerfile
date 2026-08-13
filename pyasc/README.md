@@ -7,9 +7,11 @@ Dockerfiles for PyASC (Python for Ascend) development environments. This directo
 | File | Base image |
 |------|------------|
 | [`Dockerfile.ubuntu22.04`](Dockerfile.ubuntu22.04) | `ubuntu:22.04` |
+| [`Dockerfile.ubuntu24.04`](Dockerfile.ubuntu24.04) | `ubuntu:24.04` |
 | [`Dockerfile.openeuler22.03`](Dockerfile.openeuler22.03) | `openeuler/openeuler:22.03` |
+| [`Dockerfile.openeuler24.03`](Dockerfile.openeuler24.03) | `openeuler/openeuler:24.03` |
 
-Both images install a host C/C++ toolchain, build CPython 3.11.15 from source under `/usr/local/python3.11.15`, compile LLVM/MLIR 19.1.7 with Python bindings enabled into `/opt/LLVM-19.1.7` (`LLVM_INSTALL_PREFIX`), and install Ascend CANN toolkit plus a matching ops package. Login shells source `/usr/local/Ascend/cann/set_env.sh` through `~/.bashrc`.
+Distribution images install a host C/C++ toolchain, build CPython 3.11.15 from source under `/usr/local/python3.11.15`, compile LLVM/MLIR 19.1.7 with Python bindings enabled into `/opt/LLVM-19.1.7` (`LLVM_INSTALL_PREFIX`), configure the HuaweiCloud PyPI mirror for the MLIR Python binding dependencies, and install Ascend CANN toolkit plus a matching ops package. Login shells source `/usr/local/Ascend/cann/set_env.sh` through `~/.bashrc`, and `PYTHONPATH` is preset so the MLIR Python bindings are importable.
 
 Build on a host whose CPU architecture matches the CANN `.run` packages you download (aarch64 or x86_64). Compiling LLVM from source needs ample CPU, memory, and disk; expect a long first build.
 
@@ -46,14 +48,20 @@ From the repository root:
 
 ```bash
 docker build \
-  -f pyasc/Dockerfile.ubuntu22.04 \
+  -f pyasc/Dockerfile.ubuntu24.04 \
   --build-arg CANN_TOOLKIT_URL='https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/<snapshot>/Ascend-cann-toolkit_<version>_linux-<arch>.run' \
   --build-arg CANN_OPS_URL='https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/<snapshot>/Ascend-cann-910b-ops_<version>_linux-<arch>.run' \
-  -t pyasc-dev:ubuntu22.04 \
+  -t pyasc-dev:ubuntu24.04 \
   .
 ```
 
-Swap in `pyasc/Dockerfile.openeuler22.03` and tag `pyasc-dev:openeuler22.03` for the openEuler variant. Both `CANN_TOOLKIT_URL` and `CANN_OPS_URL` are required; the build fails if either argument is omitted or unreachable.
+Use the matching file/tag for the other distribution variants:
+
+- `pyasc/Dockerfile.ubuntu22.04` → `pyasc-dev:ubuntu22.04`
+- `pyasc/Dockerfile.openeuler22.03` → `pyasc-dev:openeuler22.03`
+- `pyasc/Dockerfile.openeuler24.03` → `pyasc-dev:openeuler24.03`
+
+Both `CANN_TOOLKIT_URL` and `CANN_OPS_URL` are required; the build fails if either argument is omitted or unreachable.
 
 ### Run
 
@@ -64,7 +72,7 @@ docker run --rm -it \
   --name pyasc-dev \
   -v "$(pwd):/workspace/pyasc" \
   -w /workspace/pyasc \
-  pyasc-dev:ubuntu22.04 \
+  pyasc-dev:ubuntu24.04 \
   bash
 ```
 

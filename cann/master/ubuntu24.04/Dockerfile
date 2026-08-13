@@ -43,7 +43,6 @@ RUN wget -q https://repo.huaweicloud.com/python/3.11.15/Python-3.11.15.tar.xz &&
     ln -sf pip3.11 /usr/local/python3.11.15/bin/pip3 && \
     ln -sf python3 /usr/local/python3.11.15/bin/python && \
     ln -sf pip3 /usr/local/python3.11.15/bin/pip && \
-    cd /root && \
     cd /root && rm Python-3.11.15.tar.xz && rm -rf Python-3.11.15
 
 ENV PATH=/usr/local/python3.11.15/bin:$PATH

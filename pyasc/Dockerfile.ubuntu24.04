@@ -1,7 +1,7 @@
 # Copyright (c) 2026 wuzhenqing
 # SPDX-License-Identifier: MIT
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 USER root
 WORKDIR /root
