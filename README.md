@@ -53,15 +53,11 @@ docker build -f llvm/Dockerfile.openeuler24.03 -t llvm:19.1.7-openeuler24.03 llv
 # MindSpore
 docker build -f mindspore/2.7-cann8.2-modelarts.Dockerfile -t mindspore:2.7 .
 
-# PyASC (upstream-style developer images; CANN .run URLs required)
-docker build -f pyasc/Dockerfile.ubuntu22.04 \
+# PyASC (LLVM base + CANN .run URLs; override LLVM_IMAGE for other distros)
+docker build -f pyasc/Dockerfile \
   --build-arg CANN_TOOLKIT_URL='...' \
   --build-arg CANN_OPS_URL='...' \
-  -t pyasc-dev:ubuntu22.04 .
-docker build -f pyasc/Dockerfile.openeuler22.03 \
-  --build-arg CANN_TOOLKIT_URL='...' \
-  --build-arg CANN_OPS_URL='...' \
-  -t pyasc-dev:openeuler22.03 .
+  -t pyasc-dev:ubuntu24.04 .
 
 # PyASC ModelArts stack (CANN 9.0.0 base)
 docker build -f pyasc/9.0.0-910b-ubuntu22.04-py3.11.Dockerfile -t pyasc:9.0.0 .

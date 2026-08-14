@@ -61,8 +61,8 @@ docker build -f llvm/Dockerfile.ubuntu24.04 -t llvm:19.1.7-ubuntu24.04 llvm
 # MindSpore
 docker build -f mindspore/2.7-cann8.2-modelarts.Dockerfile -t mindspore:2.7 .
 
-# PyASC distribution developer image
-docker build -f pyasc/Dockerfile.ubuntu24.04 \
+# PyASC distribution developer image (LLVM base + CANN .run URLs)
+docker build -f pyasc/Dockerfile \
   --build-arg CANN_TOOLKIT_URL='...' \
   --build-arg CANN_OPS_URL='...' \
   -t pyasc-dev:ubuntu24.04 .

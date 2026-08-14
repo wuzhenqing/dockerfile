@@ -39,7 +39,7 @@ Each project has its own directory; versions/variants are distinguished by **fil
 |-----------|----------|
 | `cann/` | Versioned CANN runtime/toolkit images (`8.1` through `9.1.0-master`, 910b/910c/A3 devices, Ubuntu/openEuler). `cann/entrypoint.sh` is the shared container startup script. `cann/master/<os>/Dockerfile` are rolling master-channel builds. |
 | `llvm/` | From-source LLVM 19.1.7 + Clang + MLIR (+ Python bindings) on 4 distros, no CANN. Files named `Dockerfile.<distro>`. |
-| `pyasc/` | PyASC developer images: same 4 distro variants requiring `CANN_TOOLKIT_URL`/`CANN_OPS_URL` build args, plus a ModelArts stack on CANN 9.0.0. |
+| `pyasc/` | PyASC developer image: `Dockerfile` layers CANN onto an LLVM 19.1.7 base (`LLVM_IMAGE`, plus required `CANN_TOOLKIT_URL`/`CANN_OPS_URL`), and a ModelArts stack on CANN 9.0.0. |
 | `mindspore/` | MindSpore 2.7 + CANN 8.2 ModelArts image. |
 | `asnumpy/` | NumPy-style Ascend NPU dev image (Miniforge, `py311`/`py312` conda envs, PyTorch 2.9.0 + torch-npu). |
 | `verl/` | Thin customization over the published `quay.io/ascend/verl` vLLM/veRL stack. |
@@ -61,9 +61,9 @@ docker build -f path/to/Dockerfile --check .
 # Build (run from repo root; build context is usually `.`, but `llvm/` uses `llvm`)
 docker build -f cann/8.3.RC1-base.Dockerfile -t cann:8.3-base .
 docker build -f llvm/Dockerfile.ubuntu22.04 -t llvm:19.1.7-ubuntu22.04 llvm
-docker build -f pyasc/Dockerfile.ubuntu22.04 \
+docker build -f pyasc/Dockerfile \
   --build-arg CANN_TOOLKIT_URL='...' --build-arg CANN_OPS_URL='...' \
-  -t pyasc-dev:ubuntu22.04 .
+  -t pyasc-dev:ubuntu24.04 .
 
 # Preview the docs site locally
 pip install mkdocs-material && mkdocs serve
@@ -94,6 +94,7 @@ Git conventions: branch prefixes `feat/ fix/ docs/ refactor/ test/`; commit pref
 ## CI/CD and deployment
 
 - **`.github/workflows/cann-master-weekly.yml`** — every Tuesday (and on dispatch) builds `cann/master/` for 4 OS variants × amd64/arm64, resolving the latest CANN master snapshot URLs from the mirror at build time, and pushes rolling tags (`cann:master-910b-<os>[-<arch>]`) plus multi-arch manifests to a registry configured via repo variables `IMAGE_REGISTRY`/`IMAGE_NAMESPACE` and secrets `REGISTRY_USERNAME`/`REGISTRY_PASSWORD`.
+- **`.github/workflows/pyasc-weekly.yml`** — every Tuesday (and on dispatch) builds `pyasc/Dockerfile` for Ubuntu 24.04 and openEuler 24.03 on amd64 and arm64. It pulls published LLVM 19.1.7 bases from the same registry, resolves the latest CANN master snapshot URLs, and publishes two multi-arch tags (`pyasc:master-910b-llvm19.1.7-<os>`). Per-arch tags are not pushed.
 - **`.github/workflows/pages.yml`** — on every push to `main`, builds the MkDocs site and deploys to GitHub Pages.
 - No other automated builds/tests exist; all other images are built manually on demand.
 

@@ -1,23 +1,33 @@
 # PyASC Developer Images
 
-Dockerfiles for PyASC (Python for Ascend) development environments. This directory holds two complementary image styles: distribution-based developer images that build Python and LLVM from source and install CANN from `.run` packages, and a ModelArts-oriented stack on a published CANN 9.0.0 base.
+Dockerfiles for PyASC (Python for Ascend) development environments. This directory holds two complementary image styles: a single distribution developer image that layers CANN onto a published LLVM base from SWR, and a ModelArts-oriented stack on a published CANN 9.0.0 base.
 
-## Distribution developer images
+## Distribution developer image
 
-| File | Base image |
-|------|------------|
-| [`Dockerfile.ubuntu22.04`](Dockerfile.ubuntu22.04) | `ubuntu:22.04` |
-| [`Dockerfile.ubuntu24.04`](Dockerfile.ubuntu24.04) | `ubuntu:24.04` |
-| [`Dockerfile.openeuler22.03`](Dockerfile.openeuler22.03) | `openeuler/openeuler:22.03` |
-| [`Dockerfile.openeuler24.03`](Dockerfile.openeuler24.03) | `openeuler/openeuler:24.03` |
+[`Dockerfile`](Dockerfile) starts from an LLVM 19.1.7 image (CPython 3.11.15, Clang, MLIR, and MLIR Python bindings) and installs the Ascend CANN toolkit plus a matching ops package. Login shells source `/usr/local/Ascend/cann/set_env.sh` through `~/.bashrc`. `PATH`, `LLVM_INSTALL_PREFIX`, and `PYTHONPATH` are inherited from the LLVM base so the custom Python and MLIR bindings stay importable.
 
-Distribution images install a host C/C++ toolchain, build CPython 3.11.15 from source under `/usr/local/python3.11.15`, compile LLVM/MLIR 19.1.7 with Python bindings enabled into `/opt/LLVM-19.1.7` (`LLVM_INSTALL_PREFIX`), configure the HuaweiCloud PyPI mirror for the MLIR Python binding dependencies, and install Ascend CANN toolkit plus a matching ops package. Login shells source `/usr/local/Ascend/cann/set_env.sh` through `~/.bashrc`, and `PYTHONPATH` is preset so the MLIR Python bindings are importable.
+Pull the LLVM base from SWR. The images are multi-arch (`linux/amd64` and `linux/arm64`); Docker selects the matching architecture. Log in first if the repository is private:
 
-Build on a host whose CPU architecture matches the CANN `.run` packages you download (aarch64 or x86_64). Compiling LLVM from source needs ample CPU, memory, and disk; expect a long first build.
+```bash
+docker login swr.ap-southeast-1.myhuaweicloud.com
+docker pull swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/llvm:19.1.7-ubuntu24.04
+docker pull swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/llvm:19.1.7-openeuler24.03
+```
+
+Select the base with `LLVM_IMAGE`. The default is the Ubuntu 24.04 SWR tag; pass the openEuler tag (or another published LLVM tag) when you need a different distro:
+
+| `LLVM_IMAGE` | Distro |
+|--------------|--------|
+| `swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/llvm:19.1.7-ubuntu24.04` | Ubuntu 24.04 (default) |
+| `swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/llvm:19.1.7-openeuler24.03` | openEuler 24.03 |
+| `swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/llvm:19.1.7-ubuntu22.04` | Ubuntu 22.04 |
+| `swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/llvm:19.1.7-openeuler22.03` | openEuler 22.03 |
+
+Build on a host whose CPU architecture matches the CANN `.run` packages you download (`aarch64` or `x86_64`). CANN installers are architecture-specific, so build each platform separately.
 
 ### CANN package URLs
 
-These Dockerfiles do not hard-code CANN versions. You must pass two build arguments with direct download URLs:
+The Dockerfile does not hard-code CANN versions. You must pass two build arguments with direct download URLs:
 
 `CANN_TOOLKIT_URL` — Ascend CANN toolkit installer (`.run`)  
 `CANN_OPS_URL` — Ascend CANN ops installer for your target device (`.run`)
@@ -44,24 +54,41 @@ https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/mas
 
 ### Build
 
-From the repository root:
+From the repository root. Ubuntu 24.04 uses the default SWR `LLVM_IMAGE`:
 
 ```bash
 docker build \
-  -f pyasc/Dockerfile.ubuntu24.04 \
+  -f pyasc/Dockerfile \
   --build-arg CANN_TOOLKIT_URL='https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/<snapshot>/Ascend-cann-toolkit_<version>_linux-<arch>.run' \
   --build-arg CANN_OPS_URL='https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/<snapshot>/Ascend-cann-910b-ops_<version>_linux-<arch>.run' \
   -t pyasc-dev:ubuntu24.04 \
   .
 ```
 
-Use the matching file/tag for the other distribution variants:
+openEuler 24.03 points `LLVM_IMAGE` at the matching SWR tag:
 
-- `pyasc/Dockerfile.ubuntu22.04` → `pyasc-dev:ubuntu22.04`
-- `pyasc/Dockerfile.openeuler22.03` → `pyasc-dev:openeuler22.03`
-- `pyasc/Dockerfile.openeuler24.03` → `pyasc-dev:openeuler24.03`
+```bash
+docker build \
+  -f pyasc/Dockerfile \
+  --build-arg LLVM_IMAGE='swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/llvm:19.1.7-openeuler24.03' \
+  --build-arg CANN_TOOLKIT_URL='https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/<snapshot>/Ascend-cann-toolkit_<version>_linux-<arch>.run' \
+  --build-arg CANN_OPS_URL='https://ascend.devcloud.huaweicloud.com/artifactory/cann-run-mirror/software/master/<snapshot>/Ascend-cann-910b-ops_<version>_linux-<arch>.run' \
+  -t pyasc-dev:openeuler24.03 \
+  .
+```
 
-Both `CANN_TOOLKIT_URL` and `CANN_OPS_URL` are required; the build fails if either argument is omitted or unreachable.
+`CANN_TOOLKIT_URL` and `CANN_OPS_URL` are required; the build fails if either argument is omitted or unreachable. `LLVM_IMAGE` must be a published LLVM 19.1.7 tag with the Python and LLVM layout from `llvm/`.
+
+### Weekly images
+
+[`pyasc-weekly.yml`](../.github/workflows/pyasc-weekly.yml) rebuilds the distribution image every Tuesday against the latest CANN master snapshot. It pulls the SWR LLVM bases above, builds `amd64` and `arm64` natively, and publishes two rolling multi-arch tags (no per-arch tags):
+
+```text
+swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-ubuntu24.04
+swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-openeuler24.03
+```
+
+The workflow can also be started with **Actions → pyasc-weekly → Run workflow**.
 
 ### Run
 
@@ -80,11 +107,11 @@ Attach Ascend devices and driver mounts required by your host when you run NPU w
 
 ### Notes
 
-Python is installed under `/usr/local/python3.11.15` and placed first on `PATH`, so `python` / `python3` resolve to 3.11. The LLVM/MLIR build enables `MLIR_ENABLE_BINDINGS_PYTHON` against that interpreter. The images also create the `HwHiAiUser` account expected by the CANN installers; development commands in these Dockerfiles run as `root`.
+Python is installed under `/usr/local/python3.11.15` and placed first on `PATH`, so `python` / `python3` resolve to 3.11. The images also create the `HwHiAiUser` account expected by the CANN installers; development commands in this Dockerfile run as `root`.
 
 ## ModelArts stack image
 
-[`9.0.0-910b-ubuntu22.04-py3.11.Dockerfile`](9.0.0-910b-ubuntu22.04-py3.11.Dockerfile) starts from `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:9.0.0-910b-ubuntu22.04-py3.11`, configures `ma-user` for ModelArts, and layers Miniconda, a from-source LLVM under `/home/ma-user/LLVM`, plus PyTorch / torch-npu and related wheels. It does not take `CANN_*_URL` build arguments.
+[`9.0.0-910b-ubuntu22.04-py3.11.Dockerfile`](9.0.0-910b-ubuntu22.04-py3.11.Dockerfile) starts from `swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:9.0.0-910b-ubuntu22.04-py3.11`, configures `ma-user` for ModelArts, and layers Miniconda, a from-source LLVM under `/home/ma-user/LLVM`, plus PyTorch / torch-npu and related wheels. It does not take `LLVM_IMAGE` or `CANN_*_URL` build arguments.
 
 ```bash
 docker build -f pyasc/9.0.0-910b-ubuntu22.04-py3.11.Dockerfile -t pyasc:9.0.0 .
@@ -92,4 +119,4 @@ docker build -f pyasc/9.0.0-910b-ubuntu22.04-py3.11.Dockerfile -t pyasc:9.0.0 .
 
 ## Related
 
-Additional project context is in [docs/projects.md](../docs/projects.md#pyasc). For a CANN-free LLVM base with the same Python and LLVM layout, see [llvm/README.md](../llvm/README.md).
+Additional project context is in [docs/projects.md](../docs/projects.md#pyasc). For the CANN-free LLVM base used by the distribution image, see [llvm/README.md](../llvm/README.md).
