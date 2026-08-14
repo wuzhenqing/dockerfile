@@ -70,6 +70,23 @@ docker build -f pyasc/Dockerfile.ubuntu24.04 \
 
 LLVM builds are especially heavy; prefer a native builder for the target architecture. See the [Projects](projects.md) section for detailed build options and environment variables.
 
+### Run (Ascend host)
+
+Local development images typically need Ascend devices and the host driver mounted:
+
+```bash
+docker run -it --rm \
+  --device=/dev/davinci0 \
+  --device=/dev/davinci_manager \
+  --device=/dev/devmm_svm \
+  --device=/dev/hisi_hdc \
+  -v /usr/local/Ascend/driver:/usr/local/Ascend/driver \
+  asnumpy:dev \
+  /bin/bash
+```
+
+ModelArts-oriented images usually run as `ma-user` and may accept host SSH public keys via environment variables. Check the individual Dockerfile for entrypoints and user setup.
+
 ## Image variants
 
 Many CANN and framework Dockerfiles follow a two-variant convention:
@@ -101,3 +118,9 @@ This project is licensed under the [MIT License](https://github.com/wuzhenqing/d
 ## Contributing
 
 Issues and pull requests are welcome. Please read the [Contributing Guide](contributing.md) before submitting changes.
+
+## Related links
+
+- [CANN documentation](https://www.hiascend.com/document)
+- [MindSpore documentation](https://www.mindspore.cn/docs)
+- [LLVM 19.1.7 release](https://github.com/llvm/llvm-project/releases/tag/llvmorg-19.1.7)
