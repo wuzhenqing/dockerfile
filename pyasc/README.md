@@ -81,9 +81,13 @@ docker build \
 
 ### Weekly images
 
-[`pyasc-weekly.yml`](../.github/workflows/pyasc-weekly.yml) rebuilds the distribution image every Tuesday against the latest CANN master snapshot. It pulls the SWR LLVM bases above, builds `amd64` and `arm64` natively, and publishes two rolling multi-arch tags (no per-arch tags):
+[`pyasc-weekly.yml`](../.github/workflows/pyasc-weekly.yml) rebuilds the distribution image every Tuesday against the latest CANN master snapshot. It pulls the SWR LLVM bases above, builds `amd64` and `arm64` natively, and publishes four rolling per-arch tags plus two multi-arch tags:
 
 ```text
+swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-ubuntu24.04-amd64
+swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-ubuntu24.04-arm64
+swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-openeuler24.03-amd64
+swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-openeuler24.03-arm64
 swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-ubuntu24.04
 swr.ap-southeast-1.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-openeuler24.03
 ```

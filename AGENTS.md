@@ -94,7 +94,7 @@ Git conventions: branch prefixes `feat/ fix/ docs/ refactor/ test/`; commit pref
 ## CI/CD and deployment
 
 - **`.github/workflows/cann-master-weekly.yml`** — every Tuesday (and on dispatch) builds `cann/master/` for 4 OS variants × amd64/arm64, resolving the latest CANN master snapshot URLs from the mirror at build time, and pushes rolling tags (`cann:master-910b-<os>[-<arch>]`) plus multi-arch manifests to a registry configured via repo variables `IMAGE_REGISTRY`/`IMAGE_NAMESPACE` and secrets `REGISTRY_USERNAME`/`REGISTRY_PASSWORD`.
-- **`.github/workflows/pyasc-weekly.yml`** — every Tuesday (and on dispatch) builds `pyasc/Dockerfile` for Ubuntu 24.04 and openEuler 24.03 on amd64 and arm64. It pulls published LLVM 19.1.7 bases from the same registry, resolves the latest CANN master snapshot URLs, and publishes two multi-arch tags (`pyasc:master-910b-llvm19.1.7-<os>`). Per-arch tags are not pushed.
+- **`.github/workflows/pyasc-weekly.yml`** — every Tuesday (and on dispatch) builds `pyasc/Dockerfile` for Ubuntu 24.04 and openEuler 24.03 on amd64 and arm64. It pulls published LLVM 19.1.7 bases from the same registry, resolves the latest CANN master snapshot URLs, and publishes four per-arch tags (`pyasc:master-910b-llvm19.1.7-<os>-<arch>`) plus two multi-arch tags (`pyasc:master-910b-llvm19.1.7-<os>`).
 - **`.github/workflows/pages.yml`** — on every push to `main`, builds the MkDocs site and deploys to GitHub Pages.
 - No other automated builds/tests exist; all other images are built manually on demand.
 
