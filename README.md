@@ -24,14 +24,25 @@ This repository collects versioned, reviewable Dockerfiles for Ascend-based work
 
 | Project | Description | Docs |
 |---------|-------------|------|
-| **asnumpy** | Development image for NumPy-like Ascend NPU APIs | [projects.md](docs/projects.md#asnumpy) |
-| **cann** | Multi-version CANN base and ModelArts images | [projects.md](docs/projects.md#cann) |
-| **llvm** | LLVM 19.1.7, Clang, MLIR, and MLIR Python bindings from source | [llvm/README.md](llvm/README.md) |
-| **mindspore** | MindSpore on Ascend CANN | [projects.md](docs/projects.md#mindspore) |
-| **pyasc** | Python-for-Ascend toolchain and development environment | [pyasc/README.md](pyasc/README.md), [projects.md](docs/projects.md#pyasc) |
-| **verl** | veRL image tailored for Ascend / ModelArts | — |
+| **asnumpy** | Development image for NumPy-like Ascend NPU APIs | [asnumpy](docs/projects/asnumpy.md) |
+| **cann** | Multi-version CANN base and ModelArts images | [cann](docs/projects/cann.md) |
+| **llvm** | LLVM 19.1.7, Clang, MLIR, and MLIR Python bindings from source | [llvm](docs/projects/llvm.md), [llvm/README.md](llvm/README.md) |
+| **mindspore** | MindSpore on Ascend CANN | [mindspore](docs/projects/mindspore.md) |
+| **pyasc** | Python-for-Ascend toolchain and development environment | [pyasc](docs/projects/pyasc.md), [pyasc/README.md](pyasc/README.md) |
+| **verl** | veRL image tailored for Ascend / ModelArts | [verl](docs/projects/verl.md) |
 
 ## Quick start
+
+### Pull
+
+Published PyASC rolling tags are on Huawei Cloud SWR. Guiyang1 (`cn-southwest-2`) is the China-region copy; Hong Kong (`ap-southeast-1`) has the same tag names (plus per-arch variants). Log in first if the repository is private.
+
+```bash
+docker pull swr.cn-southwest-2.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-ubuntu24.04
+docker pull swr.cn-southwest-2.myhuaweicloud.com/wuzhenqing/pyasc:master-910b-llvm19.1.7-openeuler24.03
+```
+
+See [PyASC published images](docs/projects/pyasc.md#published-images) for both registries and a full `docker run` example.
 
 ### Build
 
@@ -99,9 +110,10 @@ Naming rules are documented in [docs/naming-conventions.md](docs/naming-conventi
 ## Documentation
 
 - [Naming conventions](docs/naming-conventions.md) — how Dockerfiles are named and organized
-- [Project notes](docs/projects.md) — per-project background and configuration notes
-- [LLVM images](llvm/README.md) — build options, paths, and usage for the LLVM base
-- [Contributing](CONTRIBUTING.md) — how to propose changes
+- [Projects](docs/projects/index.md) — per-project background and configuration notes
+- [LLVM images](docs/projects/llvm.md) — build options, paths, and usage for the LLVM base
+- [PyASC images](docs/projects/pyasc.md) — published tags, pull/run, and build instructions
+- [Contributing](docs/contributing.md) — how to propose changes
 
 ## Requirements
 
@@ -116,7 +128,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Contributing
 
-Issues and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting changes.
+Issues and pull requests are welcome. Please read [docs/contributing.md](docs/contributing.md) before submitting changes.
 
 ## Related links
 

@@ -1,0 +1,1 @@
+--8<-- "pyasc/README.md"

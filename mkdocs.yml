@@ -26,6 +26,7 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.expand
+    - navigation.indexes
     - navigation.top
     - navigation.footer
     - toc.follow
@@ -48,7 +49,14 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Projects: projects.md
+  - Projects:
+      - projects/index.md
+      - asnumpy: projects/asnumpy.md
+      - cann: projects/cann.md
+      - llvm: projects/llvm.md
+      - mindspore: projects/mindspore.md
+      - pyasc: projects/pyasc.md
+      - verl: projects/verl.md
   - Naming Conventions: naming-conventions.md
   - Contributing: contributing.md
 
@@ -66,7 +74,10 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path:
+        - .
+      check_paths: true
   - tables
   - attr_list
   - md_in_html

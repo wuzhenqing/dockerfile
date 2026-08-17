@@ -43,7 +43,7 @@ Each project has its own directory; versions/variants are distinguished by **fil
 | `mindspore/` | MindSpore 2.7 + CANN 8.2 ModelArts image. |
 | `asnumpy/` | NumPy-style Ascend NPU dev image (Miniforge, `py311`/`py312` conda envs, PyTorch 2.9.0 + torch-npu). |
 | `verl/` | Thin customization over the published `quay.io/ascend/verl` vLLM/veRL stack. |
-| `docs/` | MkDocs sources: `index.md` (mirrors README), `projects.md` (per-image notes), `naming-conventions.md`, `contributing.md`. |
+| `docs/` | MkDocs sources: `index.md` (mirrors README), `projects/` (per-image pages), `naming-conventions.md`, `contributing.md`. |
 
 Per-directory READMEs with build/run details: `llvm/README.md`, `pyasc/README.md`, `cann/master/README.md`.
 
@@ -87,7 +87,7 @@ Dockerfile conventions (from `docs/contributing.md` and existing files):
 - **Naming**: `{version-tag}-{platform-tag}.Dockerfile` where the platform tag is `base` or `modelarts` (framework images embed dependency versions, e.g. `2.7-cann8.2-modelarts.Dockerfile`). Never repeat the project name in the filename. Full rules and anti-patterns: `docs/naming-conventions.md`.
 - Keep `base` and `modelarts` variants of the same image in sync (same packages, toolchain, env vars — only user/home/pip-config differences).
 - Existing images commonly set China-region mirrors (HuaweiCloud apt/pip), timezone `Asia/Shanghai`, and locale `en_US.UTF-8` — follow that pattern in new images.
-- **Always update docs** (`README.md`, `docs/projects.md`, directory READMEs) when adding or changing a Dockerfile.
+- **Always update docs** (`README.md`, `docs/projects/<project>.md`, directory READMEs) when adding or changing a Dockerfile.
 
 Git conventions: branch prefixes `feat/ fix/ docs/ refactor/ test/`; commit prefixes `feat: fix: docs: style: refactor: test: chore:`. PRs go through GitHub review against `main`.
 
@@ -109,6 +109,6 @@ Git conventions: branch prefixes `feat/ fix/ docs/ refactor/ test/`; commit pref
 
 - `README.md` — quick start, build commands, variant table.
 - `docs/naming-conventions.md` — authoritative Dockerfile naming rules.
-- `docs/projects.md` — per-project background and how to choose an image.
+- `docs/projects/` — per-project pages (`index.md` for choosing an image, plus one page per image family).
 - `docs/contributing.md` — style guide, pre-commit checks, PR process.
 - `llvm/README.md`, `pyasc/README.md`, `cann/master/README.md` — detailed per-image build/run instructions.

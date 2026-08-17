@@ -68,7 +68,7 @@ Before submitting, please make sure:
    docker build -f path/to/Dockerfile --check .
    ```
 
-3. **Update documentation** if you add or change a Dockerfile.
+3. **Update documentation** if you add or change a Dockerfile (`README.md`, the matching page under `docs/projects/`, and any directory README).
 
 ### 4. Commit your changes
 

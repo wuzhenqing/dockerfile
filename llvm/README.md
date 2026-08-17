@@ -28,10 +28,10 @@ Versions and download URLs are pinned in the Dockerfiles. Python is fetched from
 
 | File | Base image |
 |------|------------|
-| [`Dockerfile.ubuntu22.04`](Dockerfile.ubuntu22.04) | `ubuntu:22.04` |
-| [`Dockerfile.openeuler22.03`](Dockerfile.openeuler22.03) | `openeuler/openeuler:22.03` |
-| [`Dockerfile.ubuntu24.04`](Dockerfile.ubuntu24.04) | `ubuntu:24.04` |
-| [`Dockerfile.openeuler24.03`](Dockerfile.openeuler24.03) | `openeuler/openeuler:24.03` |
+| [`Dockerfile.ubuntu22.04`](https://github.com/wuzhenqing/dockerfile/blob/main/llvm/Dockerfile.ubuntu22.04) | `ubuntu:22.04` |
+| [`Dockerfile.openeuler22.03`](https://github.com/wuzhenqing/dockerfile/blob/main/llvm/Dockerfile.openeuler22.03) | `openeuler/openeuler:22.03` |
+| [`Dockerfile.ubuntu24.04`](https://github.com/wuzhenqing/dockerfile/blob/main/llvm/Dockerfile.ubuntu24.04) | `ubuntu:24.04` |
+| [`Dockerfile.openeuler24.03`](https://github.com/wuzhenqing/dockerfile/blob/main/llvm/Dockerfile.openeuler24.03) | `openeuler/openeuler:24.03` |
 
 All four files follow the same layout: a single stage with three `RUN` steps (install dependencies → build Python → build LLVM). Temporary source archives and build trees are removed after each compile step.
 

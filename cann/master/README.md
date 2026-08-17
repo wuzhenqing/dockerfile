@@ -22,4 +22,4 @@ Use the matching directory for the other variants:
 
 The images run as root. A `HwHiAiUser` account is still created because the CANN installers expect it, not because the container runs as a different user. Interactive shells load the CANN environment automatically by sourcing `/usr/local/Ascend/cann/set_env.sh` from `~/.bashrc`; source it yourself for non-interactive commands.
 
-[`cann-master-weekly.yml`](../../.github/workflows/cann-master-weekly.yml) rebuilds all four variants every Tuesday against the latest CANN master snapshot and publishes rolling multi-arch tags such as `cann:master-910b-ubuntu24.04`.
+[`cann-master-weekly.yml`](https://github.com/wuzhenqing/dockerfile/blob/main/.github/workflows/cann-master-weekly.yml) rebuilds all four variants every Tuesday against the latest CANN master snapshot and publishes rolling multi-arch tags such as `cann:master-910b-ubuntu24.04`.
